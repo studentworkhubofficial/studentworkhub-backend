@@ -1391,6 +1391,23 @@ app.delete('/api/user/cv/:email', async (req, res, next) => {
         res.json({ success: true });
     } catch (err) { next(err); }
 });
+// ==========================================
+// TEMPORARY DB FIX ROUTE (RUN ONCE THEN DELETE)
+// ==========================================
+app.get('/fix-database', async (req, res) => {
+    try {
+        // 1. Add the missing 'brCertificate' column
+        await pool.query('ALTER TABLE employers ADD COLUMN brCertificate VARCHAR(500)');
+        // 2. Add other columns you might be missing for verification
+        try { await pool.query('ALTER TABLE employers ADD COLUMN otp_code VARCHAR(10)'); } catch (e) {}
+        try { await pool.query('ALTER TABLE employers ADD COLUMN otp_created_at DATETIME'); } catch (e) {}
+        try { await pool.query('ALTER TABLE employers ADD COLUMN is_email_verified TINYINT DEFAULT 0'); } catch (e) {}
+        
+        res.send('<h1>✅ SUCCESS! Database Fixed.</h1><p>You can now go back and Register.</p>');
+    } catch (err) {
+        res.send('<h1>Error or Already Fixed:</h1> <p>' + err.message + '</p>');
+    }
+});
 
 app.delete('/api/user/photo/:email', async (req, res, next) => {
     try {
