@@ -25,11 +25,10 @@ const pool = mysql.createPool({
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '12121212',
     database: process.env.DB_NAME || 'studentworkhub',
-    port: process.env.DB_PORT || 3306, // Default to 3306 if not in env
+    port: process.env.DB_PORT || 3306,
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
-    // THE FIX FOR AIVEN DATABASE:
     ssl: {
         rejectUnauthorized: false
     }
@@ -42,7 +41,6 @@ const pool = mysql.createPool({
 app.use(express.static('public'));
 app.use('/uploads', express.static('uploads'));
 
-// Updated CORS to allow connections from anywhere (Fixes connection errors)
 app.use(cors({
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -51,7 +49,6 @@ app.use(cors({
 
 app.use(bodyParser.json());
 
-// Ensure Uploads Directory Exists
 if (!fs.existsSync('./uploads')) {
     fs.mkdirSync('./uploads');
 }
@@ -65,7 +62,6 @@ const storage = multer.diskStorage({
     filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
 });
 
-// Allow images and PDFs up to 10MB
 const upload = multer({
     storage,
     limits: { fileSize: 10 * 1024 * 1024 }
@@ -79,7 +75,7 @@ const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
         user: 'studentworkhubofficial@gmail.com',
-        pass: process.env.EMAIL_PASS || 'tapn iurf qevx zvto' // Better to use Env Var
+        pass: process.env.EMAIL_PASS || 'tapn iurf qevx zvto'
     }
 });
 
@@ -97,100 +93,91 @@ async function sendEmail(to, subject, html) {
     }
 }
 
-// Helper to get full URL for uploaded files
 const getBaseUrl = (req) => `${req.protocol}://${req.get('host')}`;
 
-// Helper: Get Plan Limit (Base + Plan Allowance)
+// Helper: Get Plan Limit
 function getPlanLimit(planType) {
-    const baseLimit = 2; // Free plan (and base for others)
+    const baseLimit = 2;
     const planAllowances = {
         free: 0,
         bronze: 4,
         gold: 8,
-        platinum: 999999 // Unlimited
+        platinum: 999999
     };
     const allow = planAllowances[planType.toLowerCase()] !== undefined ? planAllowances[planType.toLowerCase()] : 0;
     return baseLimit + allow;
 }
 
-// Helper: Get Remaining Jobs for Employer
+// Helper: Get Remaining Jobs
 async function getRemainingJobs(employerEmail) {
-    // 1. Get Current Plan
     const [emp] = await pool.query('SELECT currentPlan FROM employers WHERE email = ?', [employerEmail]);
     if (emp.length === 0) return 0;
 
     const currentPlan = emp[0].currentPlan || 'free';
     const totalLimit = getPlanLimit(currentPlan);
 
-    if (totalLimit >= 999999) return 999999; // Unlimited
+    if (totalLimit >= 999999) return 999999;
 
-    // 2. Count Active Jobs
-    const [jobs] = await pool.query('SELECT COUNT(*) as count FROM jobs WHERE employerEmail = ? AND status = "Active"', [employerEmail]);
+    const [jobs] = await pool.query(`SELECT COUNT(*) as count FROM jobs WHERE employerEmail = ? AND status = 'Active'`, [employerEmail]);
     const activeJobs = jobs[0].count;
 
-    // 3. Calculate Remainder
     return Math.max(0, totalLimit - activeJobs);
 }
 
-// Helper: Expire Boosts after 10 days
+// Helper: Expire Boosts
 async function checkExpiredBoosts() {
     try {
-        await pool.query('UPDATE jobs SET isPremium = 0 WHERE isPremium = 1 AND promotedAt < DATE_SUB(NOW(), INTERVAL 10 DAY)');
+        await pool.query(`UPDATE jobs SET isPremium = 0 WHERE isPremium = 1 AND promotedAt < DATE_SUB(NOW(), INTERVAL 10 DAY)`);
     } catch (e) {
         console.error("Expire boosts error:", e);
     }
 }
 
-// Helper: Auto-Close Expired Jobs
+// Helper: Auto-Close Jobs
 async function autoCloseJobs() {
     try {
         console.log("Running auto-close jobs check...");
-        await pool.query('UPDATE jobs SET status = "Closed" WHERE deadline < CURDATE() AND status = "Active"');
+        await pool.query(`UPDATE jobs SET status = 'Closed' WHERE deadline < CURDATE() AND status = 'Active'`);
     } catch (e) {
         console.error("Auto-close error:", e);
     }
 }
 
-// Helper: Check Expired Subscriptions & Downgrade
+// Helper: Check Expired Subscriptions
 async function checkExpiredSubscriptions() {
     try {
         console.log("Running expired subscription check...");
-        // Find employers with expired subscriptions who are NOT on 'free' plan
         const [expired] = await pool.query(
-            'SELECT email, currentPlan FROM employers WHERE subscriptionExpiresAt < NOW() AND currentPlan != "free"'
+            `SELECT email, currentPlan FROM employers WHERE subscriptionExpiresAt < NOW() AND currentPlan != 'free'`
         );
 
         for (const emp of expired) {
             console.log(`Downgrading expired subscription for: ${emp.email}`);
 
-            // 1. Downgrade to Free Plan (Reset Boosts to 0)
             await pool.query(
-                'UPDATE employers SET currentPlan = "free", jobPostsRemaining = 2, boostsRemaining = 0 WHERE email = ?',
+                `UPDATE employers SET currentPlan = 'free', jobPostsRemaining = 2, boostsRemaining = 0 WHERE email = ?`,
                 [emp.email]
             );
 
-            // 2. Enforce Job Limits (Free plan allows 2 active jobs)
             const [activeJobs] = await pool.query(
-                'SELECT id FROM jobs WHERE employerEmail = ? AND status = "Active" ORDER BY postedDate DESC',
+                `SELECT id FROM jobs WHERE employerEmail = ? AND status = 'Active' ORDER BY postedDate DESC`,
                 [emp.email]
             );
 
             if (activeJobs.length > 2) {
-                // Keep the first 2 (most recent), close the rest
                 const jobsToClose = activeJobs.slice(2);
                 const idsToClose = jobsToClose.map(j => j.id);
 
                 if (idsToClose.length > 0) {
                     await pool.query(
-                        `UPDATE jobs SET status = "Closed" WHERE id IN (${idsToClose.join(',')})`
+                        `UPDATE jobs SET status = 'Closed' WHERE id IN (${idsToClose.join(',')})`
                     );
                     console.log(`Closed ${idsToClose.length} excess jobs for ${emp.email}`);
                 }
             }
 
-            // 3. Notify User
             await pool.query(
-                'INSERT INTO notifications (userEmail, message, type) VALUES (?, ?, ?)',
+                `INSERT INTO notifications (userEmail, message, type) VALUES (?, ?, ?)`,
                 [emp.email, `Your ${emp.currentPlan.toUpperCase()} subscription has expired. You have been downgraded to the Free Plan.`, 'warning']
             );
         }
@@ -199,14 +186,12 @@ async function checkExpiredSubscriptions() {
     }
 }
 
-// Run checks every 24 hours (and on startup)
 setInterval(() => {
     autoCloseJobs();
     checkExpiredSubscriptions();
     checkExpiredBoosts();
 }, 24 * 60 * 60 * 1000);
 
-// Run immediately on server start for testing/verification
 setTimeout(() => {
     autoCloseJobs();
     checkExpiredSubscriptions();
@@ -217,25 +202,21 @@ setTimeout(() => {
 // =================== ADMIN ROUTES ==================
 // ===================================================
 
-// 1. Verify or Decline Employer
 app.post('/api/admin/verify-employer', async (req, res, next) => {
     try {
         const { id, status, verifiedBy, methods, reason } = req.body;
 
         if (status === 2) {
-            // --- DECLINED LOGIC ---
             await pool.query(
                 'UPDATE employers SET isAddressVerified = 2, verifiedBy = ?, rejectionReason = ? WHERE id = ?',
                 [verifiedBy, reason, id]
             );
 
-            // Fetch employer details for email
             const [emp] = await pool.query('SELECT email, companyName FROM employers WHERE id = ?', [id]);
             if (emp.length > 0) {
                 const email = emp[0].email;
                 const name = emp[0].companyName;
 
-                // Send Email
                 const emailHtml = `
                     <h2>Account Verification Declined</h2>
                     <p>Hello ${name},</p>
@@ -247,13 +228,11 @@ app.post('/api/admin/verify-employer', async (req, res, next) => {
                 `;
                 sendEmail(email, "Account Verification Status", emailHtml);
 
-                // Create Notification
-                await pool.query('INSERT INTO notifications (userEmail, message, type) VALUES (?, ?, ?)',
+                await pool.query(`INSERT INTO notifications (userEmail, message, type) VALUES (?, ?, ?)`,
                     [email, `Verification Declined: ${reason}`, 'error']);
             }
 
         } else {
-            // --- ACCEPTED LOGIC ---
             await pool.query(
                 'UPDATE employers SET isAddressVerified = 1, verifiedBy = ?, verificationMethods = ? WHERE id = ?',
                 [verifiedBy, methods, id]
@@ -264,11 +243,9 @@ app.post('/api/admin/verify-employer', async (req, res, next) => {
                 const email = emp[0].email;
                 const name = emp[0].companyName;
 
-                // Create Notification
-                await pool.query('INSERT INTO notifications (userEmail, message, type) VALUES (?, ?, ?)',
+                await pool.query(`INSERT INTO notifications (userEmail, message, type) VALUES (?, ?, ?)`,
                     [email, `Your account has been verified! You can now post jobs.`, 'success']);
 
-                // Send Acceptance Email
                 const acceptEmailHtml = `
                     <h2>Account Verified Successfully! 🎉</h2>
                     <p>Dear ${name},</p>
@@ -294,7 +271,6 @@ app.post('/api/admin/verify-employer', async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
-// 2. Suspend Student
 app.post('/api/admin/suspend-student', upload.array('proof', 5), async (req, res, next) => {
     try {
         const { userId, reason } = req.body;
@@ -306,24 +282,20 @@ app.post('/api/admin/suspend-student', upload.array('proof', 5), async (req, res
         const targetName = user[0].firstName + ' ' + user[0].lastName;
         const proofPaths = req.files ? req.files.map(f => `${getBaseUrl(req)}/uploads/${f.filename}`) : [];
 
-        // Add to Suspended Table
         await pool.query(
             'INSERT INTO suspended_users (email, name, reason, proofFiles) VALUES (?, ?, ?, ?)',
             [targetEmail, targetName, reason, JSON.stringify(proofPaths)]
         );
 
-        // Clean up User Data
         await pool.query('DELETE FROM applications WHERE studentEmail = ?', [targetEmail]);
         await pool.query('DELETE FROM notifications WHERE userEmail = ?', [targetEmail]);
         await pool.query('DELETE FROM users WHERE id = ?', [userId]);
 
-        // Notify
         sendEmail(targetEmail, "Account Suspended", `<h2>Account Suspended</h2><p>Reason: ${reason}</p>`);
         res.json({ success: true });
     } catch (err) { next(err); }
 });
 
-// 3. Get Employer Jobs (For Admin View)
 app.get('/api/admin/employer-details/:id', async (req, res, next) => {
     try {
         const [emp] = await pool.query('SELECT email FROM employers WHERE id = ?', [req.params.id]);
@@ -334,7 +306,6 @@ app.get('/api/admin/employer-details/:id', async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
-// 4. Get Suspended List
 app.get('/api/admin/suspended', async (req, res, next) => {
     try {
         const [rows] = await pool.query('SELECT * FROM suspended_users ORDER BY suspendedAt DESC');
@@ -342,7 +313,6 @@ app.get('/api/admin/suspended', async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
-// 5. Admin Data Dashboard
 app.get('/api/admin/data', async (req, res) => {
     try {
         const [pending] = await pool.query('SELECT * FROM employers WHERE isAddressVerified = 0');
@@ -350,17 +320,15 @@ app.get('/api/admin/data', async (req, res) => {
         const [declined] = await pool.query('SELECT * FROM employers WHERE isAddressVerified = 2');
         const [students] = await pool.query('SELECT * FROM users');
 
-        // Stats
         const [s] = await pool.query('SELECT COUNT(*) c FROM users');
         const [v] = await pool.query('SELECT COUNT(*) c FROM employers WHERE isAddressVerified=1');
         const [r] = await pool.query('SELECT COUNT(*) c FROM employers WHERE isAddressVerified=2');
-        const [j] = await pool.query('SELECT COUNT(*) c FROM jobs WHERE status = "Active"');
-        const [c] = await pool.query('SELECT COUNT(*) c FROM jobs WHERE status = "Closed"');
+        const [j] = await pool.query(`SELECT COUNT(*) c FROM jobs WHERE status = 'Active'`);
+        const [c] = await pool.query(`SELECT COUNT(*) c FROM jobs WHERE status = 'Closed'`);
 
-        // Subscription Stats
-        const [bronze] = await pool.query('SELECT COUNT(*) c FROM employers WHERE LOWER(currentPlan)="bronze"');
-        const [gold] = await pool.query('SELECT COUNT(*) c FROM employers WHERE LOWER(currentPlan)="gold"');
-        const [platinum] = await pool.query('SELECT COUNT(*) c FROM employers WHERE LOWER(currentPlan)="platinum"');
+        const [bronze] = await pool.query(`SELECT COUNT(*) c FROM employers WHERE LOWER(currentPlan)='bronze'`);
+        const [gold] = await pool.query(`SELECT COUNT(*) c FROM employers WHERE LOWER(currentPlan)='gold'`);
+        const [platinum] = await pool.query(`SELECT COUNT(*) c FROM employers WHERE LOWER(currentPlan)='platinum'`);
 
         res.json({
             success: true,
@@ -379,7 +347,6 @@ app.get('/api/admin/data', async (req, res) => {
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
-// 6. Delete User (Admin Action)
 app.delete('/api/admin/delete-user/:type/:id', async (req, res, next) => {
     try {
         const { type, id } = req.params;
@@ -396,7 +363,6 @@ app.delete('/api/admin/delete-user/:type/:id', async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
-// 7. Admin Login
 app.post('/api/admin/login', (req, res) => {
     if (req.body.username === 'admin' && req.body.password === 'admin') {
         res.json({ success: true });
@@ -410,7 +376,6 @@ app.post('/api/admin/login', (req, res) => {
 // ================== AUTH ROUTES ====================
 // ===================================================
 
-// Login Student
 app.post('/api/login', async (req, res, next) => {
     try {
         const { email, password } = req.body;
@@ -433,7 +398,6 @@ app.post('/api/login', async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
-// Login Employer
 app.post('/api/login-employer', async (req, res, next) => {
     try {
         const { email, password } = req.body;
@@ -442,13 +406,10 @@ app.post('/api/login-employer', async (req, res, next) => {
             return res.status(401).json({ success: false, message: 'Invalid email or password' });
         }
 
-        // Check Email Verification
         if (employers[0].is_email_verified === 0) {
             return res.status(403).json({ success: false, requireOtp: true, email: employers[0].email, message: 'Please verify your email address.' });
         }
 
-        // Check Admin Verification Status
-        // 0 = Pending, 1 = Verified, 2 = Declined
         if (employers[0].isAddressVerified === 2) {
             return res.status(403).json({ success: false, message: 'Your account application was declined.' });
         }
@@ -469,12 +430,10 @@ app.post('/api/register', async (req, res, next) => {
     try {
         const { firstName, lastName, email, phone, dob, city, password } = req.body;
 
-        // Validate Phone
         if (!/^\+94\d{9,10}$/.test(phone)) {
             return res.status(400).json({ success: false, message: 'Invalid phone number format.' });
         }
 
-        // Check Suspension List
         const [suspended] = await pool.query('SELECT * FROM suspended_users WHERE email = ?', [email]);
         if (suspended.length > 0) return res.status(403).json({ success: false, message: 'This email is permanently suspended.' });
 
@@ -483,14 +442,14 @@ app.post('/api/register', async (req, res, next) => {
             if (existing[0].is_email_verified === 1) {
                 return res.status(400).json({ success: false, message: 'Email already registered.' });
             }
-            // Allow re-registration if not verified
             await pool.query('DELETE FROM users WHERE email = ?', [email]);
         }
 
         const otp = generateOTP();
 
+        // FIXED: Using single quotes for 'student'
         await pool.query(
-            'INSERT INTO users (firstName, lastName, email, phone, dob, city, password, role, otp_code, otp_created_at, is_email_verified) VALUES (?, ?, ?, ?, ?, ?, ?, "student", ?, NOW(), 0)',
+            `INSERT INTO users (firstName, lastName, email, phone, dob, city, password, role, otp_code, otp_created_at, is_email_verified) VALUES (?, ?, ?, ?, ?, ?, ?, 'student', ?, NOW(), 0)`,
             [firstName, lastName, email, phone, dob, city, password, otp]
         );
 
@@ -503,17 +462,15 @@ app.post('/api/register', async (req, res, next) => {
 
         sendEmail(email, "Your Verification Code - StudentWorkHub", emailHtml);
 
-        // Return requireOtp so frontend redirects
         res.json({ success: true, requireOtp: true, email, role: 'student' });
     } catch (err) { next(err); }
 });
 
-// 2. Register Employer
+// 2. Register Employer (FIXED "employer" QUOTE ISSUE)
 app.post('/api/register-employer', upload.single('brFile'), async (req, res, next) => {
     try {
         const { companyName, brNumber, industry, address, city, email, phone, password } = req.body;
 
-        // Validate Phone
         if (!/^\+94\d{9,10}$/.test(phone)) {
             return res.status(400).json({ success: false, message: 'Invalid phone number format.' });
         }
@@ -526,19 +483,18 @@ app.post('/api/register-employer', upload.single('brFile'), async (req, res, nex
                 }
                 return res.status(400).json({ success: false, message: 'Email already registered.' });
             }
-            // Allow re-registration if not verified
             await pool.query('DELETE FROM employers WHERE email = ?', [email]);
         }
 
         let brPath = req.file ? `${getBaseUrl(req)}/uploads/${req.file.filename}` : null;
         const otp = generateOTP();
 
+        // FIXED: Using single quotes for 'employer'
         await pool.query(
-            'INSERT INTO employers (companyName, brNumber, industry, address, city, email, phone, password, role, isAddressVerified, brCertificate, otp_code, otp_created_at, is_email_verified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, "employer", 0, ?, ?, NOW(), 0)',
+            `INSERT INTO employers (companyName, brNumber, industry, address, city, email, phone, password, role, isAddressVerified, brCertificate, otp_code, otp_created_at, is_email_verified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'employer', 0, ?, ?, NOW(), 0)`,
             [companyName, brNumber, industry, address, city, email, phone, password, brPath, otp]
         );
 
-        // Verification Email
         const emailHtml = `
             <h2>Verify Your Employer Account</h2>
             <p>Welcome, ${companyName}!</p>
@@ -557,7 +513,6 @@ app.post('/api/register-employer', upload.single('brFile'), async (req, res, nex
 // ================== OTP ROUTES =====================
 // ===================================================
 
-// 1. Verify OTP
 app.post('/api/verify-otp', async (req, res, next) => {
     try {
         const { email, otp, role } = req.body;
@@ -571,22 +526,19 @@ app.post('/api/verify-otp', async (req, res, next) => {
             return res.status(400).json({ success: false, message: 'Invalid OTP Code' });
         }
 
-        // Activate User
         await pool.query(`UPDATE ${table} SET is_email_verified = 1, otp_code = NULL WHERE email = ?`, [email]);
 
-        // If employer, add notifications now (delayed from registration)
         if (role === 'employer') {
             await pool.query(
-                'INSERT INTO notifications (userEmail, message, type) VALUES (?, ?, ?)',
+                `INSERT INTO notifications (userEmail, message, type) VALUES (?, ?, ?)`,
                 [email, `Welcome to StudentWorkHub! Your email has been verified.`, 'success']
             );
             await pool.query(
-                'INSERT INTO notifications (userEmail, message, type) VALUES (?, ?, ?)',
+                `INSERT INTO notifications (userEmail, message, type) VALUES (?, ?, ?)`,
                 [email, `Your account is under review by our admin team.`, 'info']
             );
         }
 
-        // Return Auth Data
         if (role === 'employer') {
             res.json({
                 success: true,
@@ -609,7 +561,6 @@ app.post('/api/verify-otp', async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
-// 2. Resend OTP
 app.post('/api/resend-otp', async (req, res, next) => {
     try {
         const { email, role } = req.body;
@@ -619,7 +570,6 @@ app.post('/api/resend-otp', async (req, res, next) => {
 
         if (user.length === 0) return res.status(404).json({ success: false, message: 'User not found' });
 
-        // Check Cooldown (3 Minutes)
         if (user[0].otp_created_at) {
             const lastSent = new Date(user[0].otp_created_at);
             const now = new Date();
@@ -645,24 +595,19 @@ app.post('/api/resend-otp', async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
-// 3. Update Email (and Resend)
-// Requires password for security even if not fully logged in
 app.post('/api/update-email', async (req, res, next) => {
     try {
         const { oldEmail, newEmail, role, password } = req.body;
         const table = role === 'employer' ? 'employers' : 'users';
 
-        // Check Creds
         const [user] = await pool.query(`SELECT * FROM ${table} WHERE email = ? AND password = ?`, [oldEmail, password]);
         if (user.length === 0) return res.status(401).json({ success: false, message: 'Invalid specific password.' });
 
-        // Check availability
         const [exists] = await pool.query(`SELECT * FROM ${table} WHERE email = ?`, [newEmail]);
         if (exists.length > 0) return res.status(400).json({ success: false, message: 'Email already in use.' });
 
         const otp = generateOTP();
 
-        // Update with new OTP
         await pool.query(
             `UPDATE ${table} SET email = ?, otp_code = ?, otp_created_at = NOW(), is_email_verified = 0 WHERE email = ?`,
             [newEmail, otp, oldEmail]
@@ -684,7 +629,6 @@ app.post('/api/update-email', async (req, res, next) => {
 // ============= SUBSCRIPTION ROUTES =================
 // ===================================================
 
-// 1. Get Subscription Plans Info
 app.get('/api/subscription/plans', (req, res) => {
     const plans = [
         {
@@ -735,7 +679,6 @@ app.get('/api/subscription/plans', (req, res) => {
     res.json({ success: true, plans });
 });
 
-// 2. Get Employer's Current Subscription
 app.get('/api/employer/subscription/:email', async (req, res, next) => {
     try {
         const [emp] = await pool.query(
@@ -747,12 +690,10 @@ app.get('/api/employer/subscription/:email', async (req, res, next) => {
             return res.status(404).json({ success: false, message: 'Employer not found' });
         }
 
-        // Calculate dynamic remaining jobs
         const remaining = await getRemainingJobs(req.params.email);
 
-        // Check for pending payment
         const [pending] = await pool.query(
-            'SELECT * FROM subscription_payments WHERE employerEmail = ? AND status = "pending" ORDER BY submittedAt DESC LIMIT 1',
+            `SELECT * FROM subscription_payments WHERE employerEmail = ? AND status = 'pending' ORDER BY submittedAt DESC LIMIT 1`,
             [req.params.email]
         );
 
@@ -770,7 +711,6 @@ app.get('/api/employer/subscription/:email', async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
-// 3. Submit Subscription Payment
 app.post('/api/subscription/submit-payment', upload.single('receipt'), async (req, res, next) => {
     try {
         const { employerEmail, planType, amount } = req.body;
@@ -781,9 +721,8 @@ app.post('/api/subscription/submit-payment', upload.single('receipt'), async (re
 
         const receiptUrl = `${getBaseUrl(req)}/uploads/${req.file.filename}`;
 
-        // Check if already has pending payment
         const [existing] = await pool.query(
-            'SELECT * FROM subscription_payments WHERE employerEmail = ? AND status = "pending"',
+            `SELECT * FROM subscription_payments WHERE employerEmail = ? AND status = 'pending'`,
             [employerEmail]
         );
 
@@ -794,17 +733,14 @@ app.post('/api/subscription/submit-payment', upload.single('receipt'), async (re
             });
         }
 
-        // Insert payment record
         await pool.query(
-            'INSERT INTO subscription_payments (employerEmail, planType, amount, receiptUrl, status) VALUES (?, ?, ?, ?, "pending")',
+            `INSERT INTO subscription_payments (employerEmail, planType, amount, receiptUrl, status) VALUES (?, ?, ?, ?, 'pending')`,
             [employerEmail, planType, amount, receiptUrl]
         );
 
-        // Get employer details
         const [emp] = await pool.query('SELECT companyName FROM employers WHERE email = ?', [employerEmail]);
         const companyName = emp[0]?.companyName || 'Employer';
 
-        // Send confirmation email
         const emailHtml = `
             <h2>Payment Submitted Successfully! 📄</h2>
             <p>Dear ${companyName},</p>
@@ -824,9 +760,8 @@ app.post('/api/subscription/submit-payment', upload.single('receipt'), async (re
         `;
         sendEmail(employerEmail, "Subscription Payment Submitted - StudentWorkHub", emailHtml);
 
-        // Send notification
         await pool.query(
-            'INSERT INTO notifications (userEmail, message, type) VALUES (?, ?, ?)',
+            `INSERT INTO notifications (userEmail, message, type) VALUES (?, ?, ?)`,
             [employerEmail, `Your ${planType.toUpperCase()} plan payment has been submitted and is pending admin review.`, 'info']
         );
 
@@ -834,7 +769,6 @@ app.post('/api/subscription/submit-payment', upload.single('receipt'), async (re
     } catch (err) { next(err); }
 });
 
-// 4. Get All Pending Payments (Admin)
 app.get('/api/admin/subscription-payments', async (req, res, next) => {
     try {
         const [payments] = await pool.query(`
@@ -847,13 +781,11 @@ app.get('/api/admin/subscription-payments', async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
-// 5. Approve Subscription Payment (Admin)
 app.post('/api/admin/subscription-payments/:id/approve', async (req, res, next) => {
     try {
         const { id } = req.params;
         const { reviewedBy } = req.body;
 
-        // Get payment details
         const [payment] = await pool.query('SELECT * FROM subscription_payments WHERE id = ?', [id]);
 
         if (payment.length === 0) {
@@ -862,50 +794,40 @@ app.post('/api/admin/subscription-payments/:id/approve', async (req, res, next) 
 
         const { employerEmail, planType, amount } = payment[0];
 
-        // Define boosts
         const boostLimits = {
             bronze: 1,
             gold: 3,
             platinum: 5
         };
         const boosts = boostLimits[planType] || 0;
-
-        // Calculate Job Limit (Dynamic)
         const limit = getPlanLimit(planType);
 
-        // Update employer subscription
         await pool.query(
             'UPDATE employers SET currentPlan = ?, jobPostsRemaining = ?, boostsRemaining = ? WHERE email = ?',
             [planType, limit, boosts, employerEmail]
         );
 
-        // Update payment status
         await pool.query(
-            'UPDATE subscription_payments SET status = "approved", reviewedBy = ?, reviewedAt = NOW() WHERE id = ?',
+            `UPDATE subscription_payments SET status = 'approved', reviewedBy = ?, reviewedAt = NOW() WHERE id = ?`,
             [reviewedBy, id]
         );
 
-        // Create subscription record
         await pool.query(
-            'INSERT INTO subscriptions (employerEmail, planType, status, activatedAt) VALUES (?, ?, "active", NOW())',
+            `INSERT INTO subscriptions (employerEmail, planType, status, activatedAt) VALUES (?, ?, 'active', NOW())`,
             [employerEmail, planType]
         );
 
-        // Calculate expiration date (30 days from now)
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 30);
 
-        // Update employer with expiration date
         await pool.query(
             'UPDATE employers SET subscriptionExpiresAt = ? WHERE email = ?',
             [expiresAt, employerEmail]
         );
 
-        // Get employer info
         const [emp] = await pool.query('SELECT companyName FROM employers WHERE email = ?', [employerEmail]);
         const companyName = emp[0]?.companyName || 'Employer';
 
-        // Send approval email
         const emailHtml = `
             <h2>Subscription Activated! 🎉</h2>
             <p>Dear ${companyName},</p>
@@ -913,7 +835,6 @@ app.post('/api/admin/subscription-payments/:id/approve', async (req, res, next) 
             <h3>Your Plan Benefits:</h3>
             <ul>
                 <li><strong>Plan:</strong> ${planType.toUpperCase()}</li>
-                <li><strong>Job Posts Available:</strong> ${planType === 'platinum' ? 'Unlimited' : jobPosts}</li>
                 <li><strong>Amount Paid:</strong> LKR ${amount}</li>
             </ul>
             <p>You can now start posting jobs and take full advantage of your subscription benefits!</p>
@@ -924,9 +845,8 @@ app.post('/api/admin/subscription-payments/:id/approve', async (req, res, next) 
         `;
         sendEmail(employerEmail, "Subscription Activated - StudentWorkHub", emailHtml);
 
-        // Send notification
         await pool.query(
-            'INSERT INTO notifications (userEmail, message, type) VALUES (?, ?, ?)',
+            `INSERT INTO notifications (userEmail, message, type) VALUES (?, ?, ?)`,
             [employerEmail, `Your ${planType.toUpperCase()} plan has been activated! You now have a total limit of ${limit} active job posts.`, 'success']
         );
 
@@ -934,13 +854,11 @@ app.post('/api/admin/subscription-payments/:id/approve', async (req, res, next) 
     } catch (err) { next(err); }
 });
 
-// 6. Decline Subscription Payment (Admin)
 app.post('/api/admin/subscription-payments/:id/decline', async (req, res, next) => {
     try {
         const { id } = req.params;
         const { reviewedBy, reason } = req.body;
 
-        // Get payment details
         const [payment] = await pool.query('SELECT * FROM subscription_payments WHERE id = ?', [id]);
 
         if (payment.length === 0) {
@@ -949,17 +867,14 @@ app.post('/api/admin/subscription-payments/:id/decline', async (req, res, next) 
 
         const { employerEmail, planType } = payment[0];
 
-        // Update payment status
         await pool.query(
-            'UPDATE subscription_payments SET status = "declined", reviewedBy = ?, reviewedAt = NOW(), declineReason = ? WHERE id = ?',
+            `UPDATE subscription_payments SET status = 'declined', reviewedBy = ?, reviewedAt = NOW(), declineReason = ? WHERE id = ?`,
             [reviewedBy, reason, id]
         );
 
-        // Get employer info
         const [emp] = await pool.query('SELECT companyName FROM employers WHERE email = ?', [employerEmail]);
         const companyName = emp[0]?.companyName || 'Employer';
 
-        // Send decline email
         const emailHtml = `
             <h2>Subscription Payment Declined</h2>
             <p>Dear ${companyName},</p>
@@ -972,9 +887,8 @@ app.post('/api/admin/subscription-payments/:id/decline', async (req, res, next) 
         `;
         sendEmail(employerEmail, "Subscription Payment Declined - StudentWorkHub", emailHtml);
 
-        // Send notification
         await pool.query(
-            'INSERT INTO notifications (userEmail, message, type) VALUES (?, ?, ?)',
+            `INSERT INTO notifications (userEmail, message, type) VALUES (?, ?, ?)`,
             [employerEmail, `Your ${planType.toUpperCase()} plan payment was declined. Reason: ${reason}`, 'error']
         );
 
@@ -987,12 +901,10 @@ app.post('/api/admin/subscription-payments/:id/decline', async (req, res, next) 
 // ================== JOB ROUTES =====================
 // ===================================================
 
-// Promote an existing job
 app.post('/api/promote-job', async (req, res, next) => {
     try {
         const { jobId, employerEmail } = req.body;
 
-        // Check boosts
         const [emp] = await pool.query('SELECT boostsRemaining FROM employers WHERE email = ?', [employerEmail]);
         if (emp.length === 0) return res.status(404).json({ success: false });
 
@@ -1000,12 +912,10 @@ app.post('/api/promote-job', async (req, res, next) => {
             return res.status(403).json({ success: false, message: 'No boosts remaining.' });
         }
 
-        // Check job
         const [job] = await pool.query('SELECT isPremium FROM jobs WHERE id = ? AND employerEmail = ?', [jobId, employerEmail]);
         if (job.length === 0) return res.status(404).json({ success: false, message: 'Job not found.' });
         if (job[0].isPremium) return res.status(400).json({ success: false, message: 'Job is already promoted.' });
 
-        // Update
         await pool.query('UPDATE jobs SET isPremium = 1, promotedAt = NOW() WHERE id = ?', [jobId]);
         await pool.query('UPDATE employers SET boostsRemaining = boostsRemaining - 1 WHERE email = ?', [employerEmail]);
 
@@ -1013,12 +923,10 @@ app.post('/api/promote-job', async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
-// 1. Post a Job (WITH SUBSCRIPTION LIMIT CHECK)
 app.post('/api/post-job', upload.array('posters', 5), async (req, res, next) => {
     try {
         const { employerEmail, companyName, jobTitle, location, schedule, hoursPerDay, payAmount, payFrequency, description, category, isPremium, deadline } = req.body;
 
-        // ===== SUBSCRIPTION LIMIT CHECK =====
         const [employer] = await pool.query(
             'SELECT currentPlan, boostsRemaining FROM employers WHERE email = ?',
             [employerEmail]
@@ -1029,8 +937,6 @@ app.post('/api/post-job', upload.array('posters', 5), async (req, res, next) => 
         }
 
         const { currentPlan, boostsRemaining } = employer[0];
-
-        // Check Remaining Jobs (Dynamic)
         const remaining = await getRemainingJobs(employerEmail);
 
         if (remaining <= 0) {
@@ -1042,7 +948,6 @@ app.post('/api/post-job', upload.array('posters', 5), async (req, res, next) => 
             });
         }
 
-        // Check Boost Limit if Premium requested
         let premiumStatus = isPremium;
         if (isPremium == 1 || isPremium == 'true') {
             if (boostsRemaining <= 0) {
@@ -1059,7 +964,6 @@ app.post('/api/post-job', upload.array('posters', 5), async (req, res, next) => 
 
         const imgs = req.files ? JSON.stringify(req.files.map(f => `${getBaseUrl(req)}/uploads/${f.filename}`)) : '[]';
 
-        // Enforce max 30-day deadline
         let validDeadline = deadline;
         const maxDate = new Date();
         maxDate.setDate(maxDate.getDate() + 30);
@@ -1071,33 +975,27 @@ app.post('/api/post-job', upload.array('posters', 5), async (req, res, next) => 
         const promotedAt = premiumStatus ? new Date() : null;
 
         await pool.query(
-            'INSERT INTO jobs (employerEmail, companyName, jobTitle, location, schedule, hoursPerDay, payAmount, payFrequency, description, category, isPremium, promotedAt, status, deadline, jobImages, postedDate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "Active", ?, ?, NOW())',
+            `INSERT INTO jobs (employerEmail, companyName, jobTitle, location, schedule, hoursPerDay, payAmount, payFrequency, description, category, isPremium, promotedAt, status, deadline, jobImages, postedDate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Active', ?, ?, NOW())`,
             [employerEmail, companyName, jobTitle, location, schedule, hoursPerDay, payAmount, payFrequency, description, category, premiumStatus, promotedAt, validDeadline, imgs]
         );
-
-        // ===== DECREMENT COUNTERS =====
-        // Note: jobPostsRemaining is no longer decremented as we use dynamic limit vs active count.
 
         if (premiumStatus) {
             await pool.query('UPDATE employers SET boostsRemaining = boostsRemaining - 1 WHERE email = ?', [employerEmail]);
         }
 
-        // Send success notification
         await pool.query(
-            'INSERT INTO notifications (userEmail, message, type) VALUES (?, ?, ?)',
+            `INSERT INTO notifications (userEmail, message, type) VALUES (?, ?, ?)`,
             [employerEmail, `Your job listing "${jobTitle}" has been posted successfully!`, 'success']
         );
 
-        // Warning if running low on posts (less than 2 remaining)
         const remainingAfterPost = remaining - 1;
         if (currentPlan !== 'platinum' && remainingAfterPost > 0 && remainingAfterPost <= 1) {
             await pool.query(
-                'INSERT INTO notifications (userEmail, message, type) VALUES (?, ?, ?)',
+                `INSERT INTO notifications (userEmail, message, type) VALUES (?, ?, ?)`,
                 [employerEmail, `Warning: You have only ${remainingAfterPost} job post${remainingAfterPost === 1 ? '' : 's'} remaining. Consider upgrading your plan.`, 'warning']
             );
         }
 
-        // Send confirmation email
         const jobPostEmailHtml = `
             <h2>Job Posted Successfully! 🎉</h2>
             <p>Dear ${companyName},</p>
@@ -1131,8 +1029,6 @@ app.post('/api/post-job', upload.array('posters', 5), async (req, res, next) => 
 });
 
 
-// 2. Fetch All Jobs (Public - Student View)
-// FIX: JOIN WITH EMPLOYERS to get the LOGO and VERIFIED STATUS correctly
 app.get('/api/jobs', async (req, res, next) => {
     try {
         await autoCloseJobs();
@@ -1152,7 +1048,6 @@ app.get('/api/jobs', async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
-// 3. Fetch My Jobs (Employer View)
 app.get('/api/my-jobs/:email', async (req, res, next) => {
     try {
         await autoCloseJobs();
@@ -1161,7 +1056,6 @@ app.get('/api/my-jobs/:email', async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
-// 4. Update Job
 app.put('/api/jobs/:id', upload.array('posters', 5), async (req, res, next) => {
     try {
         const { jobTitle, location, schedule, hoursPerDay, payAmount, payFrequency, description, category, isPremium, status, deadline, keepExisting, existingImages, replaceImages } = req.body;
@@ -1169,20 +1063,16 @@ app.put('/api/jobs/:id', upload.array('posters', 5), async (req, res, next) => {
         let updateQuery = 'UPDATE jobs SET jobTitle=?, location=?, schedule=?, hoursPerDay=?, payAmount=?, payFrequency=?, description=?, category=?, isPremium=?, status=?, deadline=?';
         let params = [jobTitle, location, schedule, hoursPerDay, payAmount, payFrequency, description, category, isPremium, status, deadline];
 
-        // Handle images based on the scenario
         if (keepExisting === 'true' && existingImages) {
-            // Keep existing images - no change to jobImages column
             updateQuery += ', jobImages=?';
             params.push(existingImages);
         } else if (replaceImages === 'true' || req.files?.length > 0) {
-            // Replace with new images or remove all (if no files uploaded)
             const imgs = req.files && req.files.length > 0
                 ? JSON.stringify(req.files.map(f => `${getBaseUrl(req)}/uploads/${f.filename}`))
                 : '[]';
             updateQuery += ', jobImages=?';
             params.push(imgs);
         }
-        // If neither flag is set, don't update images at all
 
         updateQuery += ' WHERE id=?';
         params.push(req.params.id);
@@ -1192,7 +1082,6 @@ app.put('/api/jobs/:id', upload.array('posters', 5), async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
-// 5. Delete Job
 app.delete('/api/jobs/:id', async (req, res, next) => {
     try {
         await pool.query('DELETE FROM jobs WHERE id = ?', [req.params.id]);
@@ -1205,7 +1094,6 @@ app.delete('/api/jobs/:id', async (req, res, next) => {
 // ============= APPLICATION & NOTIFICATIONS =========
 // ===================================================
 
-// 1. Get List of Applied Jobs (Student)
 app.get('/api/student/applications/:email', async (req, res, next) => {
     try {
         const [rows] = await pool.query('SELECT jobId FROM applications WHERE studentEmail = ?', [req.params.email]);
@@ -1213,25 +1101,21 @@ app.get('/api/student/applications/:email', async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
-// 2. Apply for a Job (FIXED UNDEFINED NOTIFICATIONS)
 app.post('/api/apply-job', upload.single('newCv'), async (req, res, next) => {
     try {
         const { jobId, studentEmail, useExisting } = req.body;
         let cvPath = null;
 
-        // 1. Fetch Job Details explicitly to ensure we have the Title and Company Name
         const [jobCheck] = await pool.query('SELECT * FROM jobs WHERE id = ?', [jobId]);
 
         if (jobCheck.length === 0 || jobCheck[0].status === 'Closed') {
             return res.status(400).json({ success: false, message: 'Job is closed or does not exist.' });
         }
 
-        // 2. Extract details safely
         const jobTitle = jobCheck[0].jobTitle;
         const companyName = jobCheck[0].companyName;
         const employerEmail = jobCheck[0].employerEmail;
 
-        // 3. Handle CV
         if (useExisting === 'true') {
             const [user] = await pool.query('SELECT cvFile FROM users WHERE email = ?', [studentEmail]);
             if (user.length > 0 && user[0].cvFile) {
@@ -1244,26 +1128,21 @@ app.post('/api/apply-job', upload.single('newCv'), async (req, res, next) => {
             cvPath = `${getBaseUrl(req)}/uploads/${req.file.filename}`;
         }
 
-        // 4. Insert Application
         await pool.query(
             'INSERT INTO applications (jobId, studentEmail, cvFile, appliedAt) VALUES (?, ?, ?, NOW())',
             [jobId, studentEmail, cvPath]
         );
 
-        // 5. Send Notifications (Now using variables we are certain exist)
-        // To Student
         await pool.query(
-            'INSERT INTO notifications (userEmail, message, type) VALUES (?, ?, ?)',
+            `INSERT INTO notifications (userEmail, message, type) VALUES (?, ?, ?)`,
             [studentEmail, `You successfully applied to ${companyName}`, 'success']
         );
 
-        // To Employer (Dashboard Notification)
         await pool.query(
-            'INSERT INTO notifications (userEmail, message, type) VALUES (?, ?, ?)',
+            `INSERT INTO notifications (userEmail, message, type) VALUES (?, ?, ?)`,
             [employerEmail, `New application received for ${jobTitle}`, 'info']
         );
 
-        // To Employer (Email Notification)
         const emailHtml = `
             <h2>New Job Application</h2>
             <p><strong>Job:</strong> ${jobTitle}</p>
@@ -1276,10 +1155,8 @@ app.post('/api/apply-job', upload.single('newCv'), async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
-// 3. Get Employer Applications (FIXED UNDEFINED EMAIL)
 app.get('/api/employer/applications/:email', async (req, res, next) => {
     try {
-        // We select u.email explicitly so the frontend can access it
         const [r] = await pool.query(`
             SELECT a.*, 
                    u.firstName, 
@@ -1297,7 +1174,6 @@ app.get('/api/employer/applications/:email', async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
-// 4. Get Notifications
 app.get('/api/notifications/:email', async (req, res, next) => {
     try {
         const [r] = await pool.query('SELECT * FROM notifications WHERE userEmail=? ORDER BY createdAt DESC', [req.params.email]);
@@ -1305,7 +1181,6 @@ app.get('/api/notifications/:email', async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
-// 5. Mark Notification Read
 app.put('/api/notifications/read/:id', async (req, res, next) => {
     try {
         await pool.query('UPDATE notifications SET isRead = 1 WHERE id = ?', [req.params.id]);
@@ -1334,7 +1209,6 @@ app.get('/api/user/:email', async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
-// Update Employer Profile
 app.put('/api/update-employer', upload.single('logo'), async (req, res, next) => {
     try {
         const { email, address, city, phone, emailNotifications } = req.body;
@@ -1352,14 +1226,11 @@ app.put('/api/update-employer', upload.single('logo'), async (req, res, next) =>
         params.push(email);
 
         await pool.query(sql, params);
-
-        // Return the Updated Employer Object so Frontend can refresh immediately
         const [rows] = await pool.query('SELECT * FROM employers WHERE email = ?', [email]);
         res.json({ success: true, employer: rows[0] });
     } catch (err) { next(err); }
 });
 
-// Update Student Profile
 app.post('/api/update-profile', upload.fields([{ name: 'profilePic' }, { name: 'cvFile' }]), async (req, res, next) => {
     try {
         const { email, firstName, lastName, phone, dob, city, educationLevel } = req.body;
@@ -1384,29 +1255,11 @@ app.post('/api/update-profile', upload.fields([{ name: 'profilePic' }, { name: '
     } catch (err) { next(err); }
 });
 
-// Delete Student CV/Photo
 app.delete('/api/user/cv/:email', async (req, res, next) => {
     try {
         await pool.query('UPDATE users SET cvFile=NULL WHERE email=?', [req.params.email]);
         res.json({ success: true });
     } catch (err) { next(err); }
-});
-// ==========================================
-// TEMPORARY DB FIX ROUTE (RUN ONCE THEN DELETE)
-// ==========================================
-app.get('/fix-database', async (req, res) => {
-    try {
-        // 1. Add the missing 'brCertificate' column
-        await pool.query('ALTER TABLE employers ADD COLUMN brCertificate VARCHAR(500)');
-        // 2. Add other columns you might be missing for verification
-        try { await pool.query('ALTER TABLE employers ADD COLUMN otp_code VARCHAR(10)'); } catch (e) {}
-        try { await pool.query('ALTER TABLE employers ADD COLUMN otp_created_at DATETIME'); } catch (e) {}
-        try { await pool.query('ALTER TABLE employers ADD COLUMN is_email_verified TINYINT DEFAULT 0'); } catch (e) {}
-        
-        res.send('<h1>✅ SUCCESS! Database Fixed.</h1><p>You can now go back and Register.</p>');
-    } catch (err) {
-        res.send('<h1>Error or Already Fixed:</h1> <p>' + err.message + '</p>');
-    }
 });
 
 app.delete('/api/user/photo/:email', async (req, res, next) => {
@@ -1414,6 +1267,23 @@ app.delete('/api/user/photo/:email', async (req, res, next) => {
         await pool.query('UPDATE users SET profilePic=NULL WHERE email=?', [req.params.email]);
         res.json({ success: true });
     } catch (err) { next(err); }
+});
+
+// ===================================================
+// ================== TEMP FIX ROUTE =================
+// ===================================================
+// Keep this in case you need to re-run it
+app.get('/fix-database', async (req, res) => {
+    try {
+        await pool.query('ALTER TABLE employers ADD COLUMN brCertificate VARCHAR(500)');
+        try { await pool.query('ALTER TABLE employers ADD COLUMN otp_code VARCHAR(10)'); } catch (e) {}
+        try { await pool.query('ALTER TABLE employers ADD COLUMN otp_created_at DATETIME'); } catch (e) {}
+        try { await pool.query('ALTER TABLE employers ADD COLUMN is_email_verified TINYINT DEFAULT 0'); } catch (e) {}
+        
+        res.send('<h1>✅ SUCCESS! Database Fixed.</h1>');
+    } catch (err) {
+        res.send('<h1>Error or Already Fixed:</h1> <p>' + err.message + '</p>');
+    }
 });
 
 // ===================================================
