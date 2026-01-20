@@ -255,7 +255,7 @@
         async function loadSubscriptionPlans() {
             try {
                 console.log('Fetching plans...');
-                const res = await fetch('http://localhost:3000/api/subscription/plans');
+                const res = await fetch('http://https://studentworkhub.onrender.com/api/subscription/plans');
                 if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
 
                 const data = await res.json();
@@ -264,7 +264,7 @@
                 // Fetch current subscription for user
                 let currentPlanId = 'free';
                 try {
-                    const subRes = await fetch(`http://localhost:3000/api/employer/subscription/${encodeURIComponent(user.email)}`);
+                    const subRes = await fetch(`http://https://studentworkhub.onrender.com/api/employer/subscription/${encodeURIComponent(user.email)}`);
                     const subData = await subRes.json();
                     if (subData.success && subData.subscription) {
                         currentPlanId = (subData.subscription.currentPlan || 'free').toLowerCase();
@@ -322,7 +322,7 @@
                 }
             } catch (err) {
                 console.error('Error loading subscription plans:', err);
-                document.getElementById('plansGrid').innerHTML = `<p style="color:red; text-align:center;">Error loading plans: ${err.message}. Ensure backend is running at localhost:3000.</p>`;
+                document.getElementById('plansGrid').innerHTML = `<p style="color:red; text-align:center;">Error loading plans: ${err.message}. Ensure backend is running at https://studentworkhub.onrender.com.</p>`;
             }
         }
 
@@ -397,7 +397,7 @@
             btn.innerText = 'Submitting...';
 
             try {
-                const res = await fetch('http://localhost:3000/api/subscription/submit-payment', {
+                const res = await fetch('http://https://studentworkhub.onrender.com/api/subscription/submit-payment', {
                     method: 'POST',
                     body: formData
                 });

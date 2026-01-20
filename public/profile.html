@@ -553,7 +553,7 @@
             document.getElementById('email').value = user.email;
 
             try {
-                const res = await fetch(`http://localhost:3000/api/user/${user.email}`);
+                const res = await fetch(`http://https://studentworkhub.onrender.com/api/user/${user.email}`);
                 const data = await res.json();
                 if (data.success) {
                     const u = data.user;
@@ -601,7 +601,7 @@
         async function deleteCV() {
             showModal('confirm', 'Delete CV', 'Are you sure you want to delete your CV?', async () => {
                 try {
-                    const res = await fetch(`http://localhost:3000/api/user/cv/${user.email}`, { method: 'DELETE' });
+                    const res = await fetch(`http://https://studentworkhub.onrender.com/api/user/cv/${user.email}`, { method: 'DELETE' });
                     const data = await res.json();
                     if (data.success) {
                         showModal('success', 'CV Deleted', 'CV removed successfully.', () => location.reload());
@@ -614,7 +614,7 @@
         async function deletePhoto() {
             showModal('confirm', 'Remove Photo', 'Are you sure you want to remove your profile photo?', async () => {
                 try {
-                    const res = await fetch(`http://localhost:3000/api/user/photo/${user.email}`, { method: 'DELETE' });
+                    const res = await fetch(`http://https://studentworkhub.onrender.com/api/user/photo/${user.email}`, { method: 'DELETE' });
                     const data = await res.json();
                     if (data.success) {
                         delete user.profilePic;
@@ -653,7 +653,7 @@
             if (cv) formData.append('cvFile', cv);
 
             try {
-                const res = await fetch('http://localhost:3000/api/update-profile', { method: 'POST', body: formData });
+                const res = await fetch('http://https://studentworkhub.onrender.com/api/update-profile', { method: 'POST', body: formData });
                 const data = await res.json();
                 if (data.success) {
                     user.name = data.user.firstName + " " + data.user.lastName;

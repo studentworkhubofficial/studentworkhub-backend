@@ -936,7 +936,7 @@
 
         async function fetchAppliedJobs() {
             try {
-                const res = await fetch(`http://localhost:3000/api/student/applications/${user.email}`);
+                const res = await fetch(`http://https://studentworkhub.onrender.com/api/student/applications/${user.email}`);
                 const data = await res.json();
                 if (data.success) appliedJobIds = data.appliedJobIds;
             } catch (e) { }
@@ -944,7 +944,7 @@
 
         async function fetchJobs() {
             try {
-                const res = await fetch('http://localhost:3000/api/jobs');
+                const res = await fetch('http://https://studentworkhub.onrender.com/api/jobs');
                 const data = await res.json();
                 if (data.success) {
                     allJobs = data.jobs;
@@ -1079,7 +1079,7 @@
             btn.innerText = "Sending..."; btn.disabled = true;
 
             try {
-                const res = await fetch('http://localhost:3000/api/apply-job', { method: 'POST', body: formData });
+                const res = await fetch('http://https://studentworkhub.onrender.com/api/apply-job', { method: 'POST', body: formData });
                 const data = await res.json();
                 if (data.success) {
                     showAlert('success', 'Application Sent!', 'Success.');
