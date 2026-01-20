@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.disabled = true;
 
             try {
-                const res = await fetch('http://https://studentworkhub.onrender.com/api/login', {
+                const res = await fetch('https://studentworkhub.onrender.com/api/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.disabled = true;
 
             try {
-                const res = await fetch('http://https://studentworkhub.onrender.com/api/register', {
+                const res = await fetch('https://studentworkhub.onrender.com/api/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(formData)

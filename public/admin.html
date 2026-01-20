@@ -753,7 +753,7 @@
         document.getElementById('adminLogin').addEventListener('submit', async (e) => {
             e.preventDefault();
             const u = document.getElementById('aUser').value, p = document.getElementById('aPass').value;
-            const res = await fetch('http://https://studentworkhub.onrender.com/api/admin/login', {
+            const res = await fetch('https://studentworkhub.onrender.com/api/admin/login', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: u, password: p })
             });
@@ -769,7 +769,7 @@
         });
 
         async function loadData() {
-            const res = await fetch('http://https://studentworkhub.onrender.com/api/admin/data');
+            const res = await fetch('https://studentworkhub.onrender.com/api/admin/data');
             currentData = await res.json();
 
             if (currentData.stats) {
@@ -790,7 +790,7 @@
         // Load subscription payments
         async function loadPayments() {
             try {
-                const res = await fetch('http://https://studentworkhub.onrender.com/api/admin/subscription-payments');
+                const res = await fetch('https://studentworkhub.onrender.com/api/admin/subscription-payments');
                 const data = await res.json();
 
                 if (data.success && data.payments) {
@@ -856,8 +856,8 @@
 
         async function reviewPayment(action) {
             const endpoint = action === 'approve' ?
-                `http://https://studentworkhub.onrender.com/api/admin/subscription-payments/${selectedPaymentId}/approve` :
-                `http://https://studentworkhub.onrender.com/api/admin/subscription-payments/${selectedPaymentId}/decline`;
+                `https://studentworkhub.onrender.com/api/admin/subscription-payments/${selectedPaymentId}/approve` :
+                `https://studentworkhub.onrender.com/api/admin/subscription-payments/${selectedPaymentId}/decline`;
 
             const body = { reviewedBy: adminUser };
 
@@ -1025,7 +1025,7 @@
             btn.innerText = "Processing..."; btn.disabled = true;
 
             try {
-                await fetch('http://https://studentworkhub.onrender.com/api/admin/verify-employer', {
+                await fetch('https://studentworkhub.onrender.com/api/admin/verify-employer', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(body)
                 });
@@ -1050,7 +1050,7 @@
             } else {
                 row.classList.add('show');
                 btn.classList.add('rotated');
-                const res = await fetch(`http://https://studentworkhub.onrender.com/api/admin/employer-details/${id}`);
+                const res = await fetch(`https://studentworkhub.onrender.com/api/admin/employer-details/${id}`);
                 const data = await res.json();
 
                 if (data.success && data.jobs.length > 0) {
@@ -1114,7 +1114,7 @@
             btn.innerText = "Suspending..."; btn.disabled = true;
 
             try {
-                const res = await fetch('http://https://studentworkhub.onrender.com/api/admin/suspend-student', { method: 'POST', body: formData });
+                const res = await fetch('https://studentworkhub.onrender.com/api/admin/suspend-student', { method: 'POST', body: formData });
                 const data = await res.json();
                 if (data.success) {
                     showCustomModal({ type: 'success', title: 'Suspended', message: 'Account Suspended Successfully' });
@@ -1126,7 +1126,7 @@
         });
 
         async function loadSuspended() {
-            const res = await fetch('http://https://studentworkhub.onrender.com/api/admin/suspended');
+            const res = await fetch('https://studentworkhub.onrender.com/api/admin/suspended');
             const data = await res.json();
             const container = document.getElementById('suspendedList');
 
@@ -1184,7 +1184,7 @@
                 title: 'Delete User',
                 message: 'Permanently delete this user?',
                 onConfirm: async () => {
-                    await fetch(`http://https://studentworkhub.onrender.com/api/admin/delete-user/${type}/${id}`, { method: 'DELETE' });
+                    await fetch(`https://studentworkhub.onrender.com/api/admin/delete-user/${type}/${id}`, { method: 'DELETE' });
                     loadData();
                     showCustomModal({ type: 'success', title: 'Deleted', message: 'User deleted successfully' });
                 }

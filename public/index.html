@@ -671,10 +671,10 @@
         async function loadNotifications() {
             try {
                 // Verify user existence first
-                const verifyRes = await fetch(`http://https://studentworkhub.onrender.com/api/user/${user.email}`);
+                const verifyRes = await fetch(`https://studentworkhub.onrender.com/api/user/${user.email}`);
                 if (verifyRes.status === 404) { logout(); return; }
 
-                const res = await fetch(`http://https://studentworkhub.onrender.com/api/notifications/${user.email}`);
+                const res = await fetch(`https://studentworkhub.onrender.com/api/notifications/${user.email}`);
                 const data = await res.json();
 
                 if (data.success && data.notifications.length > 0) {
@@ -704,7 +704,7 @@
         async function markAsRead(e, id) {
             e.stopPropagation();
             try {
-                await fetch(`http://https://studentworkhub.onrender.com/api/notifications/read/${id}`, { method: 'PUT' });
+                await fetch(`https://studentworkhub.onrender.com/api/notifications/read/${id}`, { method: 'PUT' });
                 loadNotifications(); // Refresh
             } catch (e) { console.error(e); }
         }
@@ -712,7 +712,7 @@
         // LOAD PREMIUM JOBS
         async function loadPremiumJobs() {
             try {
-                const res = await fetch('http://https://studentworkhub.onrender.com/api/jobs');
+                const res = await fetch('https://studentworkhub.onrender.com/api/jobs');
                 const data = await res.json();
                 const grid = document.getElementById('jobs-grid');
 

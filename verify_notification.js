@@ -4,7 +4,7 @@ async function run() {
     const timestamp = Date.now();
     const empEmail = `emp_${timestamp}@test.com`;
     const stuEmail = `stu_${timestamp}@test.com`;
-    const baseUrl = 'http://https://studentworkhub.onrender.com';
+    const baseUrl = 'https://studentworkhub.onrender.com';
 
     console.log("Starting verification...");
 
