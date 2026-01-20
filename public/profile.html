@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - StudentWorkHub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* core */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f3f4f6;
+            color: #1f2937;
+            padding-bottom: 50px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* navbar */
+        .navbar {
+            background: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e5e7eb;
+            margin-bottom: 2rem;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #111827;
+            text-decoration: none;
+        }
+
+        .logo span {
+            color: #3b82f6;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: #6b7280;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .nav-link:hover {
+            color: #111827;
+        }
+
+        .logout {
+            color: #ef4444;
+        }
+
+        .logout:hover {
+            color: #dc2626;
+        }
+
+        /* layout */
+        .profile-grid {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 30px;
+        }
+
+        /* photo card */
+        .photo-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid #e5e7eb;
+            height: fit-content;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .avatar-wrapper {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 20px auto;
+        }
+
+        .profile-avatar {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #f3f4f6;
+            background: #e5e7eb;
+            display: none;
+        }
+
+        .initials-avatar {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: #3b82f6;
+            color: white;
+            font-size: 2.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 4px solid #e5e7eb;
+        }
+
+        .btn-upload {
+            background: #f3f4f6;
+            color: #374151;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-block;
+            font-size: 0.9rem;
+            transition: 0.2s;
+        }
+
+        .btn-upload:hover {
+            background: #e5e7eb;
+        }
+
+        .btn-delete-photo {
+            background: #fee2e2;
+            color: #dc2626;
+            border: none;
+            font-size: 0.8rem;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+            display: none;
+            font-weight: 600;
+        }
+
+        .btn-delete-photo:hover {
+            background: #fecaca;
+        }
+
+        /* form card */
+        .form-card {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        h2 {
+            margin-top: 0;
+            margin-bottom: 25px;
+            color: #111827;
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 15px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            position: relative;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #4b5563;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            background: #fff;
+        }
+
+        input:disabled {
+            background: #f3f4f6;
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        /* components */
+        .city-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            z-index: 100;
+            display: none;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .city-list.show {
+            display: block;
+        }
+
+        .city-option {
+            padding: 10px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 0.9rem;
+        }
+
+        .city-option:hover {
+            background: #eff6ff;
+            color: #3b82f6;
+        }
+
+        .file-box {
+            border: 1px dashed #d1d5db;
+            border-radius: 6px;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .btn-choose {
+            background: #e5e7eb;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .btn-delete-cv {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            display: none;
+        }
+
+        .btn-save {
+            background: #0f172a;
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .btn-save:hover {
+            background: #1e293b;
+        }
+
+        /* modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.show .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 10px;
+        }
+
+        .modal-message {
+            color: #6b7280;
+            font-size: 1rem;
+            margin-bottom: 25px;
+        }
+
+        .modal-btn {
+            background: #0f172a;
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .modal-btn.error {
+            background: #ef4444;
+        }
+
+        @media(max-width: 800px) {
+            .profile-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="customModal" class="modal-overlay">
+        <div class="modal-content">
+            <div id="modalIcon" class="modal-icon">✅</div>
+            <h3 id="modalTitle" class="modal-title">Success!</h3>
+            <p id="modalMessage" class="modal-message">Profile updated successfully.</p>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button id="modalCancelBtn" class="modal-btn"
+                    style="background: #e5e7eb; color: #374151; display: none;">Cancel</button>
+                <button id="modalBtn" class="modal-btn" onclick="closeModal()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <nav class="navbar">
+        <a href="index.html" class="logo">StudentWorkHub<span>.</span></a>
+        <div class="nav-links">
+            <a href="index.html" class="nav-link">← Dashboard</a>
+            <a onclick="logout()" class="nav-link logout">Log Out</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="profile-grid">
+
+            <div class="photo-card">
+                <div class="avatar-wrapper">
+                    <div class="initials-avatar" id="initialsAvatar">U</div>
+                    <img src="" id="photoPreview" class="profile-avatar">
+                </div>
+                <h3 id="displayName" style="margin-bottom: 5px;">User</h3>
+                <p style="color: #6b7280; font-size: 0.9rem; margin-top: 0;">Student Account</p>
+
+                <div style="margin-top: 15px;">
+                    <label for="photoInput" class="btn-upload">Change Photo</label>
+                    <input type="file" id="photoInput" accept=".jpg, .jpeg, .png" style="display: none;"
+                        onchange="previewImage(event)">
+                </div>
+                <button id="btnDeletePhoto" class="btn-delete-photo" onclick="deletePhoto()">Delete Photo</button>
+            </div>
+
+            <div class="form-card">
+                <h2>Profile Settings</h2>
+                <form id="profileForm">
+                    <div class="form-row">
+                        <div class="input-group"><label>First Name</label><input type="text" id="fname" required></div>
+                        <div class="input-group"><label>Last Name</label><input type="text" id="lname" required></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="input-group"><label>Email (Locked)</label><input type="email" id="email" disabled>
+                        </div>
+                        <div class="input-group"><label>Phone (Locked)</label><input type="tel" id="phone" disabled>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="input-group"><label>Date of Birth</label><input type="date" id="dob"></div>
+                        <div class="input-group custom-select-container">
+                            <label>City / Town</label>
+                            <input type="text" id="citySearch" placeholder="Select City..." autocomplete="off">
+                            <div class="city-list" id="cityList"></div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="input-group"><label>Education</label>
+                            <select id="eduLevel">
+                                <option>O-Level</option>
+                                <option>A-Level</option>
+                                <option>Undergraduate</option>
+                                <option>Diploma</option>
+                            </select>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Update CV <span style="font-size:0.7rem; color:#ef4444; font-weight:500;">(PDF only,
+                                    Max 20MB)</span></label>
+                            <div class="file-box">
+                                <span id="cvLabel"
+                                    style="font-size:0.85rem; color:#6b7280; white-space:nowrap; overflow:hidden; max-width:150px;">No
+                                    file chosen</span>
+                                <div style="display:flex; gap:5px; align-items:center;">
+                                    <button type="button" id="btnDeleteCV" class="btn-delete-cv"
+                                        onclick="deleteCV()">Delete</button>
+                                    <label for="cvInput" class="btn-choose">Browse</label>
+                                </div>
+                                <input type="file" id="cvInput" accept=".pdf" style="display:none;"
+                                    onchange="validateCV(this)">
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-save" id="saveBtn">Save Changes</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const user = JSON.parse(localStorage.getItem('studentUser'));
+
+        // --- MASTER CITY LIST ---
+        const cities = [
+            "Colombo", "Dehiwala-Mount Lavinia", "Moratuwa", "Sri Jayawardenepura Kotte", "Negombo",
+            "Kandy", "Kalutara", "Vavuniya", "Galle", "Trincomalee", "Batticaloa", "Jaffna",
+            "Katunayake", "Dambulla", "Kolonnawa", "Anuradhapura", "Ratnapura", "Badulla",
+            "Matara", "Puttalam", "Kegalle", "Panadura", "Beruwala", "Ja-Ela", "Wattala",
+            "Gampaha", "Nuwara Eliya", "Hambantota", "Tangalle", "Monaragala", "Wellawaya",
+            "Ampara", "Kurunegala", "Chilaw", "Mannar", "Point Pedro", "Valvettithurai",
+            "Hikkaduwa", "Weligama", "Ambalangoda", "Gampola", "Nawalapitiya", "Hatton",
+            "Talawakele", "Bandarawela", "Haputale"
+        ].sort();
+
+        function showModal(type, title, message, onConfirm = null) {
+            const modal = document.getElementById('customModal');
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalMessage').innerText = message;
+            const btn = document.getElementById('modalBtn');
+            const cancelBtn = document.getElementById('modalCancelBtn');
+            const icon = document.getElementById('modalIcon');
+
+            // Clone buttons to remove old listeners
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+            const newCancelBtn = cancelBtn.cloneNode(true);
+            cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+
+            if (type === 'success') {
+                icon.innerText = '✅'; newBtn.className = 'modal-btn';
+                newBtn.onclick = () => { closeModal(); if (!onConfirm) location.reload(); else onConfirm(); };
+            } else if (type === 'confirm') {
+                icon.innerText = '⚠️'; newBtn.className = 'modal-btn';
+                newBtn.innerText = 'Confirm';
+                newCancelBtn.style.display = 'inline-block';
+                newCancelBtn.onclick = closeModal;
+                newBtn.onclick = () => { closeModal(); if (onConfirm) onConfirm(); };
+            } else {
+                icon.innerText = '❌'; newBtn.className = 'modal-btn error';
+                newBtn.onclick = closeModal;
+            }
+
+            if (type !== 'confirm') {
+                newCancelBtn.style.display = 'none';
+                newBtn.innerText = 'OK';
+            }
+
+            modal.classList.add('show');
+        }
+        function closeModal() { document.getElementById('customModal').classList.remove('show'); }
+
+        const cityInput = document.getElementById('citySearch'), cityList = document.getElementById('cityList');
+
+        if (cityInput) {
+            // CLICK TO CLEAR
+            cityInput.addEventListener('click', function () {
+                this.value = '';
+                renderCities();
+                cityList.classList.add('show');
+            });
+
+            cityInput.addEventListener('input', () => renderCities(cityInput.value));
+        }
+
+        function renderCities(val = "") {
+            cityList.innerHTML = '';
+            const filtered = cities.filter(c => c.toLowerCase().includes(val.toLowerCase()));
+            if (filtered.length > 0) {
+                filtered.forEach(c => {
+                    const div = document.createElement('div'); div.className = 'city-option'; div.innerText = `📍 ${c}`;
+                    div.onclick = () => { cityInput.value = c; cityList.classList.remove('show'); };
+                    cityList.appendChild(div);
+                });
+                cityList.classList.add('show');
+            } else { cityList.classList.remove('show'); }
+        }
+        document.addEventListener('click', (e) => { if (!e.target.closest('.custom-select-container')) cityList.classList.remove('show'); });
+
+        // LOAD DATA
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!user || user.role !== 'student') { window.location.href = 'studentlogin.html'; return; }
+            document.getElementById('email').value = user.email;
+
+            try {
+                const res = await fetch(`http://localhost:3000/api/user/${user.email}`);
+                const data = await res.json();
+                if (data.success) {
+                    const u = data.user;
+                    document.getElementById('fname').value = u.firstName || '';
+                    document.getElementById('lname').value = u.lastName || '';
+                    document.getElementById('phone').value = u.phone || '';
+                    document.getElementById('citySearch').value = u.city || '';
+                    document.getElementById('eduLevel').value = u.educationLevel || '';
+                    document.getElementById('displayName').innerText = `${u.firstName} ${u.lastName}`;
+                    if (u.dob) document.getElementById('dob').value = u.dob.split('T')[0];
+
+                    if (u.profilePic) {
+                        document.getElementById('photoPreview').src = u.profilePic;
+                        document.getElementById('photoPreview').style.display = 'block';
+                        document.getElementById('initialsAvatar').style.display = 'none';
+                        document.getElementById('btnDeletePhoto').style.display = 'inline-block';
+                    } else {
+                        document.getElementById('photoPreview').src = 'default-profile.png';
+                        document.getElementById('photoPreview').style.display = 'block';
+                        document.getElementById('initialsAvatar').style.display = 'none';
+                        document.getElementById('btnDeletePhoto').style.display = 'none';
+                    }
+
+                    if (u.cvFile) {
+                        document.getElementById('cvLabel').innerText = "CV Uploaded ✅";
+                        document.getElementById('cvLabel').style.color = "#10b981";
+                        document.getElementById('cvLabel').style.fontWeight = "600";
+                        document.getElementById('btnDeleteCV').style.display = "block";
+                    }
+                }
+            } catch (e) { console.error(e); }
+        });
+
+        // CV VALIDATION
+        function validateCV(input) {
+            const file = input.files[0];
+            if (!file) return;
+            if (file.type !== 'application/pdf') { showModal('error', 'Invalid File', 'Only PDF files are allowed.'); input.value = ''; return; }
+            if (file.size > 20 * 1024 * 1024) { showModal('error', 'File Too Large', 'Maximum file size is 20MB.'); input.value = ''; return; }
+            document.getElementById('cvLabel').innerText = file.name;
+            document.getElementById('cvLabel').style.color = "#1f2937";
+        }
+
+        // DELETE CV
+        async function deleteCV() {
+            showModal('confirm', 'Delete CV', 'Are you sure you want to delete your CV?', async () => {
+                try {
+                    const res = await fetch(`http://localhost:3000/api/user/cv/${user.email}`, { method: 'DELETE' });
+                    const data = await res.json();
+                    if (data.success) {
+                        showModal('success', 'CV Deleted', 'CV removed successfully.', () => location.reload());
+                    }
+                } catch (e) { showModal('error', 'Error', 'Could not delete CV.'); }
+            });
+        }
+
+        // DELETE PHOTO
+        async function deletePhoto() {
+            showModal('confirm', 'Remove Photo', 'Are you sure you want to remove your profile photo?', async () => {
+                try {
+                    const res = await fetch(`http://localhost:3000/api/user/photo/${user.email}`, { method: 'DELETE' });
+                    const data = await res.json();
+                    if (data.success) {
+                        delete user.profilePic;
+                        localStorage.setItem('studentUser', JSON.stringify(user));
+                        showModal('success', 'Photo Removed', 'Profile picture deleted.', () => location.reload());
+                    }
+                } catch (e) { showModal('error', 'Error', 'Could not delete photo.'); }
+            });
+        }
+
+        // SAVE
+        document.getElementById('profileForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('saveBtn');
+            btn.innerText = "Saving...";
+
+            const formData = new FormData();
+            formData.append('email', user.email);
+            formData.append('firstName', document.getElementById('fname').value);
+            formData.append('lastName', document.getElementById('lname').value);
+            formData.append('phone', document.getElementById('phone').value);
+            formData.append('dob', document.getElementById('dob').value);
+            formData.append('city', document.getElementById('citySearch').value);
+            formData.append('educationLevel', document.getElementById('eduLevel').value);
+
+            const photo = document.getElementById('photoInput').files[0];
+            const cv = document.getElementById('cvInput').files[0];
+            if (photo) {
+                if (photo.type !== 'image/jpeg' && photo.type !== 'image/png') {
+                    showModal('error', 'Invalid File', 'Profile photo must be JPG or PNG.');
+                    btn.innerText = "Save Changes";
+                    return;
+                }
+                formData.append('profilePic', photo);
+            }
+            if (cv) formData.append('cvFile', cv);
+
+            try {
+                const res = await fetch('http://localhost:3000/api/update-profile', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.success) {
+                    user.name = data.user.firstName + " " + data.user.lastName;
+                    if (data.user.profilePic) user.profilePic = data.user.profilePic;
+                    localStorage.setItem('studentUser', JSON.stringify(user));
+                    showModal('success', 'Profile Updated!', 'Changes saved.');
+                } else { showModal('error', 'Update Failed', data.message || 'Error occurred.'); }
+            } catch (e) { showModal('error', 'Connection Error', 'Check server.'); }
+            finally { btn.innerText = "Save Changes"; }
+        });
+
+        function previewImage(event) {
+            const file = event.target.files[0];
+            if (file && (file.type === 'image/jpeg' || file.type === 'image/png')) {
+                const reader = new FileReader();
+                reader.onload = function () {
+                    document.getElementById('photoPreview').src = reader.result;
+                    document.getElementById('photoPreview').style.display = 'block';
+                    document.getElementById('initialsAvatar').style.display = 'none';
+                }
+                reader.readAsDataURL(file);
+            } else {
+                showModal('error', 'Invalid Format', 'Please select a JPG or PNG image.');
+                event.target.value = '';
+            }
+        }
+
+        function logout() { localStorage.removeItem('studentUser'); window.location.href = 'studentlogin.html'; }
+    </script>
+</body>
+
+</html>

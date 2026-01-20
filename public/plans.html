@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscription Plans - StudentWorkHub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="index.css"> <!-- Reusing index.css if suitable, or inline -->
+    <style>
+        /* Reusing relevant styles from index.html */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0f172a;
+            --accent: #3b82f6;
+            --success: #10b981;
+            --text-dark: #1e293b;
+            --text-light: #64748b;
+            --white: #ffffff;
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.5);
+            --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        a {
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+        /* NAVBAR */
+        .navbar {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-bottom: var(--glass-border);
+            padding: 1.2rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .logo span {
+            color: var(--accent);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: #6b7280;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .nav-link:hover {
+            color: #111827;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+            padding: 0.7rem 1.5rem;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+        }
+
+        .subscription-plans {
+            padding: 4rem 0;
+        }
+
+        /* Generic Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-box {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 30px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            animation: modalFadeIn 0.2s ease-out;
+            text-align: center;
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="container nav-container">
+            <a href="employerdashboard.html" class="logo">Employer<span>Hub</span></a>
+            <div class="nav-links">
+                <a href="employerdashboard.html" class="nav-link">← Back to Dashboard</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- SUBSCRIPTION PLANS SECTION -->
+    <section id="subscription" class="subscription-plans">
+        <div class="container">
+            <h2 style="text-align: center; font-size: 2.5rem; margin-bottom: 1rem; color: #0f172a;">Upgrade Your Plan
+            </h2>
+            <p style="text-align: center; color: #64748b; margin-bottom: 3rem; font-size: 1.1rem;">Unlock more job posts
+                and premium features</p>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;"
+                id="plansGrid">
+                <!-- Plans loaded dynamically -->
+                <p style="text-align:center; width:100%; color:#64748b;">Loading plans...</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- SUBSCRIPTION PAYMENT MODAL -->
+    <div id="subscriptionModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(3px); z-index: 9999; align-items: center; justify-content: center;">
+        <div
+            style="background: white; border-radius: 16px; padding: 40px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; position: relative;">
+            <button onclick="closeSubscriptionModal()"
+                style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b;">×</button>
+
+            <h2 style="margin-bottom: 10px; color: #0f172a;" id="modalPlanName">Plan Name</h2>
+            <p style="color: #64748b; margin-bottom: 25px;" id="modalPlanPrice">LKR 0</p>
+
+            <div id="modalFeatures"
+                style="background: #f8fafc; padding: 20px; border-radius: 12px; margin-bottom: 25px;">
+                <!-- Features loaded dynamically -->
+            </div>
+
+            <h3 style="margin-bottom: 15px; color: #0f172a;">Bank Transfer Instructions</h3>
+            <div
+                style="background: #fffbeb; border: 1px solid #fcd34d; padding: 20px; border-radius: 12px; margin-bottom: 25px;">
+                <p style="margin-bottom: 10px; font-weight: 600; color: #92400e;">Please transfer the payment to:</p>
+                <p style="margin: 5px 0;"><strong>Bank:</strong> Bank of Ceylon</p>
+                <p style="margin: 5px 0;"><strong>Branch:</strong> Colombo Main Branch</p>
+                <p style="margin: 5px 0;"><strong>Account Name:</strong> StudentWorkHub Pvt Ltd</p>
+                <p style="margin: 5px 0;"><strong>Account Number:</strong> 0012345678</p>
+                <p style="margin: 5px 0;"><strong>Amount:</strong> <span id="modalPaymentAmount">LKR 0</span></p>
+                <p style="margin-top: 15px; font-size: 0.9rem; color: #92400e;">⚠️ After making the transfer, please
+                    upload your payment receipt below.</p>
+            </div>
+
+            <form id="paymentForm" onsubmit="submitPayment(event)">
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #0f172a;">Upload Payment
+                        Receipt *</label>
+                    <input type="file" id="receiptFile" accept="image/*,.pdf" required
+                        style="width: 100%; padding: 12px; border: 2px dashed #e2e8f0; border-radius: 8px; cursor: pointer;">
+                    <p style="font-size: 0.85rem; color: #64748b; margin-top: 5px;">Accepted formats: JPG, PNG, PDF (Max
+                        5MB)</p>
+                </div>
+
+                <button type="submit" id="submitPaymentBtn" class="btn btn-primary"
+                    style="width: 100%; padding: 14px; font-size: 1rem;">Submit Payment for Review</button>
+            </form>
+
+            <p style="text-align: center; font-size: 0.85rem; color: #64748b; margin-top: 20px;">
+                Your payment will be reviewed by our admin team within 1-2 business days.
+            </p>
+        </div>
+    </div>
+    </div>
+
+    <!-- Generic Alert/Confirm Modal -->
+    <div id="genericModal" class="modal-overlay">
+        <div class="modal-box">
+            <div id="modalIcon" style="font-size: 3rem; margin-bottom: 15px;">⚠️</div>
+            <h3 id="modalTitle" style="margin-bottom: 10px; font-weight: 800; color: #1e293b;">Alert</h3>
+            <p id="modalMessage" style="color: #64748b; margin-bottom: 25px; font-size: 0.95rem;">Message goes here.</p>
+            <div id="modalButtons" style="display: flex; gap: 10px; justify-content: center;">
+                <button id="modalCancelBtn"
+                    style="padding: 10px 20px; background: #e2e8f0; color: #475569; border: none; border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer;">Cancel</button>
+                <button id="modalConfirmBtn"
+                    style="padding: 10px 20px; background: #0f172a; color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer;">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const user = JSON.parse(localStorage.getItem('studentUser'));
+
+        // ===================================================
+        // =========== SUBSCRIPTION PLANS LOGIC ==============
+        // ===================================================
+
+        let selectedPlan = null;
+
+        // Load subscription plans
+        async function loadSubscriptionPlans() {
+            try {
+                console.log('Fetching plans...');
+                const res = await fetch('http://localhost:3000/api/subscription/plans');
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
+                const data = await res.json();
+                console.log('Plans data:', data);
+
+                // Fetch current subscription for user
+                let currentPlanId = 'free';
+                try {
+                    const subRes = await fetch(`http://localhost:3000/api/employer/subscription/${encodeURIComponent(user.email)}`);
+                    const subData = await subRes.json();
+                    if (subData.success && subData.subscription) {
+                        currentPlanId = (subData.subscription.currentPlan || 'free').toLowerCase();
+                        console.log('Current Plan:', currentPlanId);
+                    }
+                } catch (e) {
+                    console.error('Error fetching user subscription:', e);
+                }
+
+                if (data.success && data.plans) {
+                    const grid = document.getElementById('plansGrid');
+                    if (data.plans.length === 0) {
+                        grid.innerHTML = '<p style="text-align:center; width:100%; color:#64748b;">No subscription plans found.</p>';
+                        return;
+                    }
+
+                    grid.innerHTML = data.plans.map(plan => {
+                        const isCurrentPlan = plan.id === currentPlanId;
+
+                        let buttonHtml = '';
+                        if (isCurrentPlan) {
+                            buttonHtml = `<button disabled style="width: 100%; padding: 12px; background: #10b981; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: default; opacity: 0.8;">Active Plan</button>`;
+                        } else {
+                            // If free plan is not active, allow downgrading/selecting (or just show button)
+                            // Usually "Select Plan" for non-free
+                            if (plan.id === 'free') {
+                                buttonHtml = `<button disabled style="width: 100%; padding: 12px; background: #f1f5f9; color: #cbd5e1; border: 2px solid #e2e8f0; border-radius: 8px; font-weight: 600; cursor: not-allowed;">Free</button>`;
+                            } else {
+                                buttonHtml = `<button onclick="openSubscriptionModal(${JSON.stringify(plan).replace(/"/g, '&quot;')})" style="width: 100%; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='#2563eb'" onmouseout="this.style.background='#3b82f6'">Upgrade</button>`;
+                            }
+                        }
+
+                        return `
+                        <div style="background: ${plan.popular ? 'linear-gradient(135deg, #eff6ff, #dbeafe)' : 'white'}; border: 2px solid ${plan.popular ? '#3b82f6' : (isCurrentPlan ? '#10b981' : '#e2e8f0')}; border-radius: 16px; padding: 30px; text-align: center; position: relative; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.05);" onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 10px 20px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.05)';">
+                            ${plan.popular ? '<div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #3b82f6; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;">POPULAR</div>' : ''}
+                            ${isCurrentPlan ? '<div style="position: absolute; top: 10px; right: 10px; background: #10b981; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;">CURRENT</div>' : ''}
+                            <div style="font-size: 3rem; margin-bottom: 10px;">${plan.emoji}</div>
+                            <h3 style="font-size: 1.3rem; font-weight: 700; color: #0f172a; margin-bottom: 10px;">${plan.name}</h3>
+                            <div style="font-size: 2rem; font-weight: 800; color: #3b82f6; margin-bottom: 20px;">
+                                ${plan.price === 0 ? 'FREE' : `LKR ${plan.price.toLocaleString()}`}
+                                ${plan.price > 0 ? '<span style="font-size: 0.9rem; color: #64748b; font-weight: 400;">/month</span>' : ''}
+                            </div>
+                            <div style="text-align: left; margin-bottom: 25px;">
+                                ${plan.features.map(feature => `
+                                    <div style="padding: 8px 0; color: #334155; font-size: 0.95rem;">
+                                        <span style="color: #10b981; margin-right: 8px;">✓</span>${feature}
+                                    </div>
+                                `).join('')}
+                            </div>
+                            ${buttonHtml}
+                        </div>
+                    `}).join('');
+                } else {
+                    throw new Error(data.message || 'Failed to load plans');
+                }
+            } catch (err) {
+                console.error('Error loading subscription plans:', err);
+                document.getElementById('plansGrid').innerHTML = `<p style="color:red; text-align:center;">Error loading plans: ${err.message}. Ensure backend is running at localhost:3000.</p>`;
+            }
+        }
+
+        function handleFreePlan() {
+            if (!user || user.role !== 'employer') {
+                showCustomModal({ type: 'warning', title: 'Login Required', message: 'Please login as an employer.' });
+                return;
+            }
+            showCustomModal({ type: 'info', title: 'Free Plan', message: 'You are currently on the FREE plan. Select a paid plan to upgrade!' });
+        }
+
+        function openSubscriptionModal(plan) {
+            if (!user || user.role !== 'employer') {
+                showCustomModal({
+                    type: 'warning',
+                    title: 'Login Required',
+                    message: 'Please login as an employer to subscribe',
+                    onConfirm: () => { window.location.href = 'employerlogin.html'; }
+                });
+                return;
+            }
+
+            selectedPlan = plan;
+            document.getElementById('modalPlanName').innerText = plan.name;
+            document.getElementById('modalPlanPrice').innerText = `LKR ${plan.price.toLocaleString()} / month`;
+            document.getElementById('modalPaymentAmount').innerText = `LKR ${plan.price.toLocaleString()}`;
+
+            const featuresHtml = plan.features.map(f => `
+                <div style="padding: 8px 0; color: #334155;">
+                    <span style="color: #10b981; margin-right: 8px;">✓</span>${f}
+                </div>
+            `).join('');
+            document.getElementById('modalFeatures').innerHTML = featuresHtml;
+
+            const modal = document.getElementById('subscriptionModal');
+            modal.style.display = 'flex';
+        }
+
+        function closeSubscriptionModal() {
+            document.getElementById('subscriptionModal').style.display = 'none';
+            document.getElementById('paymentForm').reset();
+        }
+
+        async function submitPayment(event) {
+            event.preventDefault();
+
+            if (!user || user.role !== 'employer') {
+                showCustomModal({ type: 'error', title: 'Error', message: 'Please login as an employer' });
+                return;
+            }
+
+            const receiptFile = document.getElementById('receiptFile').files[0];
+
+            if (!receiptFile) {
+                showCustomModal({ type: 'error', title: 'File Required', message: 'Please select a receipt file' });
+                return;
+            }
+
+            if (receiptFile.size > 5 * 1024 * 1024) {
+                showCustomModal({ type: 'error', title: 'File Too Large', message: 'File size must be less than 5MB' });
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('receipt', receiptFile);
+            formData.append('employerEmail', user.email);
+            formData.append('planType', selectedPlan.id);
+            formData.append('amount', selectedPlan.price);
+
+            const btn = document.getElementById('submitPaymentBtn');
+            btn.disabled = true;
+            btn.innerText = 'Submitting...';
+
+            try {
+                const res = await fetch('http://localhost:3000/api/subscription/submit-payment', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    showCustomModal({
+                        type: 'success',
+                        title: 'Payment Submitted',
+                        message: 'Payment submitted successfully! Your subscription will be activated after admin review (1-2 business days).',
+                        onConfirm: () => {
+                            closeSubscriptionModal();
+                            window.location.href = 'employerdashboard.html';
+                        }
+                    });
+                } else {
+                    showCustomModal({ type: 'error', title: 'Submission Failed', message: data.message || 'Failed to submit payment. Please try again.' });
+                }
+            } catch (err) {
+                console.error('Payment submission error:', err);
+                showCustomModal({ type: 'error', title: 'Error', message: 'Error submitting payment. Please try again.' });
+            } finally {
+                btn.disabled = false;
+                btn.innerText = 'Submit Payment for Review';
+            }
+        }
+
+        function showCustomModal({ type = 'info', title, message, onConfirm = null }) {
+            const modal = document.getElementById('genericModal');
+            const icon = document.getElementById('modalIcon');
+            const titleEl = document.getElementById('modalTitle');
+            const msgEl = document.getElementById('modalMessage');
+            const confirmBtn = document.getElementById('modalConfirmBtn');
+            const cancelBtn = document.getElementById('modalCancelBtn');
+
+            titleEl.innerText = title;
+            msgEl.innerText = message;
+
+            // Icon & Color Logic
+            if (type === 'success') {
+                icon.innerText = '✅';
+                confirmBtn.style.background = '#10b981'; // Green
+            } else if (type === 'error') {
+                icon.innerText = '❌';
+                confirmBtn.style.background = '#ef4444'; // Red
+            } else if (type === 'warning' || type === 'confirm') {
+                icon.innerText = '⚠️';
+                confirmBtn.style.background = '#0f172a'; // Dark
+            } else {
+                icon.innerText = 'ℹ️';
+                confirmBtn.style.background = '#3b82f6'; // Blue
+            }
+
+            // Clean up previous event listeners
+            const newConfirmBtn = confirmBtn.cloneNode(true);
+            confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+
+            const newCancelBtn = cancelBtn.cloneNode(true);
+            cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+
+            if (onConfirm) {
+                newCancelBtn.style.display = 'inline-block';
+                newCancelBtn.onclick = () => { modal.style.display = 'none'; };
+
+                newConfirmBtn.innerText = 'Confirm';
+                newConfirmBtn.onclick = () => {
+                    modal.style.display = 'none';
+                    onConfirm();
+                };
+            } else {
+                newCancelBtn.style.display = 'none';
+                newConfirmBtn.innerText = 'OK';
+                newConfirmBtn.onclick = () => { modal.style.display = 'none'; };
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        // Load subscription plans on page load
+        document.addEventListener("DOMContentLoaded", () => {
+            // Access control
+            if (!user || user.role !== 'employer') {
+                window.location.href = 'employerlogin.html';
+                return;
+            }
+            loadSubscriptionPlans();
+        });
+    </script>
+</body>
+
+</html>

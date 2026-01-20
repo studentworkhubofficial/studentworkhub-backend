@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your Email - StudentWorkHub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+    <style>
+        body {
+            background-color: #f8fafc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Outfit', sans-serif;
+            margin: 0;
+        }
+
+        .otp-container {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+        }
+
+        .icon-circle {
+            width: 80px;
+            height: 80px;
+            background: #e0f2fe;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            color: #0284c7;
+            font-size: 2rem;
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            color: #0f172a;
+            margin-bottom: 0.5rem;
+        }
+
+        p {
+            color: #64748b;
+            margin-bottom: 2rem;
+            line-height: 1.5;
+        }
+
+        .email-display {
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        .otp-inputs {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .otp-inputs input {
+            width: 45px;
+            height: 55px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #0f172a;
+            transition: all 0.2s;
+        }
+
+        .otp-inputs input:focus {
+            border-color: #0284c7;
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.1);
+        }
+
+        .verify-btn {
+            background: #0284c7;
+            color: white;
+            border: none;
+            padding: 1rem;
+            width: 100%;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-bottom: 1.5rem;
+        }
+
+        .verify-btn:hover {
+            background: #0369a1;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+
+        .action-link {
+            color: #0284c7;
+            text-decoration: none;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .action-link:hover {
+            text-decoration: underline;
+        }
+
+        .action-link.disabled {
+            color: #94a3b8;
+            cursor: not-allowed;
+            pointer-events: none;
+            text-decoration: none;
+        }
+
+        /* Modal Shared */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Status Modal Specific */
+        .status-modal-content {
+            text-align: center;
+        }
+
+        .status-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 0.5rem;
+        }
+
+        .status-msg {
+            color: #64748b;
+            margin-bottom: 1.5rem;
+        }
+
+        .status-btn {
+            background: #0284c7;
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .status-btn:hover {
+            background: #0369a1;
+        }
+
+        /* Edit Modal Form Specific */
+        .form-group {
+            margin-bottom: 1rem;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #334155;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .cancel-btn {
+            background: #f1f5f9;
+            color: #475569;
+            border: none;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .save-btn {
+            background: #0284c7;
+            color: white;
+            border: none;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            flex: 1;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="otp-container">
+        <div class="icon-circle">
+            ✉️
+        </div>
+        <h1>Email Verification</h1>
+        <p>We've sent a 6-digit verification code to <br> <span class="email-display"
+                id="displayEmail">user@example.com</span></p>
+
+        <div class="otp-inputs" id="otpInputs">
+            <input type="text" maxlength="1" pattern="\d*">
+            <input type="text" maxlength="1" pattern="\d*">
+            <input type="text" maxlength="1" pattern="\d*">
+            <input type="text" maxlength="1" pattern="\d*">
+            <input type="text" maxlength="1" pattern="\d*">
+            <input type="text" maxlength="1" pattern="\d*">
+        </div>
+
+        <button class="verify-btn" onclick="verifyOtp()">Verify Email</button>
+
+        <div class="actions">
+            <div>
+                <span id="timerText">Resend in 03:00</span>
+                <a class="action-link disabled" id="resendLink" onclick="resendOtp()">Resend Code</a>
+            </div>
+            <a class="action-link" onclick="openEmailModal()">Wrong email?</a>
+        </div>
+    </div>
+
+    <!-- Edit Email Modal -->
+    <div class="modal" id="emailModal">
+        <div class="modal-content">
+            <h2 style="margin-top: 0; color: #0f172a;">Update Email</h2>
+            <p style="margin-bottom: 1.5rem; color: #64748b;">Enter your correct email address. We'll send a new code.
+            </p>
+
+            <div class="form-group">
+                <label>Current Password</label>
+                <input type="password" id="confirmPassword" placeholder="Required for security">
+            </div>
+
+            <div class="form-group">
+                <label>New Email Address</label>
+                <input type="email" id="newEmail" placeholder="e.g. name@example.com">
+            </div>
+
+            <div class="modal-actions">
+                <button class="cancel-btn" onclick="closeEmailModal()">Cancel</button>
+                <button class="save-btn" onclick="updateEmail()">Update & Resend</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Generic Status Modal -->
+    <div class="modal" id="statusModal">
+        <div class="modal-content status-modal-content">
+            <div class="status-title" id="statusTitle">Title</div>
+            <p class="status-msg" id="statusMsg">Message goes here.</p>
+            <button class="status-btn" onclick="closeStatusModal()">OK</button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api';
+
+        // Get params from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        let userEmail = urlParams.get('email');
+        const userRole = urlParams.get('role'); // 'student' or 'employer'
+
+        if (!userEmail || !userRole) {
+            alert("Missing session data. Redirecting to login.");
+            window.location.href = 'index.html';
+        }
+
+        document.getElementById('displayEmail').innerText = userEmail;
+
+        // Auto-focus logic
+        const inputs = document.querySelectorAll('.otp-inputs input');
+        inputs[0].focus();
+
+        inputs.forEach((input, index) => {
+            input.addEventListener('keydown', (e) => {
+                if (e.key >= 0 && e.key <= 9) {
+                    input.value = ''; // clear first
+                } else if (e.key === 'Backspace') {
+                    if (!input.value && index > 0) {
+                        inputs[index - 1].focus();
+                    }
+                }
+            });
+
+            input.addEventListener('input', (e) => {
+                const val = e.target.value;
+                if (val && index < inputs.length - 1) {
+                    inputs[index + 1].focus();
+                }
+            });
+
+            // Paste support
+            input.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const paste = (e.clipboardData || window.clipboardData).getData('text');
+                const clean = paste.replace(/\D/g, '').substring(0, 6);
+
+                clean.split('').forEach((char, i) => {
+                    if (inputs[i]) inputs[i].value = char;
+                });
+
+                if (clean.length === 6) verifyOtp();
+            });
+        });
+
+        // Timer Logic
+        let timeLeft = 180; // 3 minutes
+        const timerText = document.getElementById('timerText');
+        const resendLink = document.getElementById('resendLink');
+
+        function startTimer() {
+            timeLeft = 180;
+            resendLink.classList.add('disabled');
+            resendLink.style.display = 'none';
+            timerText.style.display = 'inline';
+
+            const timer = setInterval(() => {
+                timeLeft--;
+                const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+                const s = (timeLeft % 60).toString().padStart(2, '0');
+                timerText.innerText = `Resend in ${m}:${s}`;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    timerText.style.display = 'none';
+                    resendLink.style.display = 'inline';
+                    resendLink.classList.remove('disabled');
+                }
+            }, 1000);
+        }
+
+        startTimer();
+
+        // Notification Logic
+        function showNotification(title, msg) {
+            document.getElementById('statusTitle').innerText = title;
+            document.getElementById('statusMsg').innerText = msg;
+            document.getElementById('statusModal').classList.add('active');
+        }
+
+        function closeStatusModal() {
+            document.getElementById('statusModal').classList.remove('active');
+        }
+
+        // API Calls
+        async function verifyOtp() {
+            const otp = Array.from(inputs).map(i => i.value).join('');
+            if (otp.length !== 6) {
+                showNotification("Incomplete Code", "Please enter the complete 6-digit code.");
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/verify-otp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: userEmail, role: userRole, otp })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    // Save session like login
+                    if (userRole === 'student') {
+                        localStorage.setItem('studentUser', JSON.stringify({
+                            name: data.userName, email: data.email, role: 'student', isLoggedIn: true, profilePic: data.profilePic || 'default-profile.png'
+                        }));
+                        window.location.href = 'index.html'; // Redirect to home/dashboard
+                    } else {
+                        localStorage.setItem('employerUser', JSON.stringify({
+                            email: data.email, role: 'employer', isLoggedIn: true, name: data.name, logo: data.logo
+                        }));
+                        window.location.href = 'employerdashboard.html';
+                    }
+                } else {
+                    showNotification("Verification Failed", data.message || "Invalid OTP");
+                }
+            } catch (err) {
+                console.error(err);
+                showNotification("Connection Error", "Something went wrong. Please check your connection.");
+            }
+        }
+
+        async function resendOtp() {
+            try {
+                const res = await fetch(`${API_BASE}/resend-otp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: userEmail, role: userRole })
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    showNotification("Code Resent", "A new verification code has been sent to your email.");
+                    startTimer();
+                } else {
+                    showNotification("Resend Failed", data.message || "Could not resend code.");
+                }
+            } catch (err) {
+                showNotification("Error", "Could not connect to server to resend code.");
+            }
+        }
+
+        // Email Modal Logic
+        function openEmailModal() {
+            document.getElementById('emailModal').classList.add('active');
+            document.getElementById('newEmail').value = userEmail;
+        }
+
+        function closeEmailModal() {
+            document.getElementById('emailModal').classList.remove('active');
+        }
+
+        async function updateEmail() {
+            const newEmail = document.getElementById('newEmail').value;
+            const password = document.getElementById('confirmPassword').value;
+
+            if (!newEmail || !password) {
+                showNotification("Missing Information", "Please enter both your new email and password.");
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/update-email`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        oldEmail: userEmail,
+                        newEmail: newEmail,
+                        role: userRole,
+                        password: password
+                    })
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    closeEmailModal();
+                    userEmail = newEmail;
+                    document.getElementById('displayEmail').innerText = newEmail;
+
+                    // Update URL without reload
+                    const url = new URL(window.location);
+                    url.searchParams.set('email', newEmail);
+                    window.history.pushState({}, '', url);
+
+                    showNotification("Email Updated", "Your email has been updated! A new code was sent to " + newEmail);
+                    startTimer();
+                } else {
+                    showNotification("Update Failed", data.message || "Invalid password or email already in use.");
+                }
+            } catch (err) {
+                console.error(err);
+                showNotification("Error", "Could not connect to update email.");
+            }
+        }
+
+    </script>
+</body>
+
+</html>

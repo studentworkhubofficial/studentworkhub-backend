@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Access - StudentWorkHub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        /* core */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0f172a;
+            --accent: #3b82f6;
+            --success: #10b981;
+            --text-dark: #1e293b;
+            --text-light: #64748b;
+            --white: #ffffff;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* navbar */
+        .navbar {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1.2rem 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--white);
+            cursor: pointer;
+        }
+
+        .logo .dot {
+            color: var(--accent);
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2.5rem;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 500;
+            transition: 0.3s;
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 0.6rem 1.4rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: 0.3s ease;
+        }
+
+        .btn-employer {
+            background-color: var(--accent);
+            color: white;
+            border: 1px solid var(--accent);
+        }
+
+        /* hero & glass panel */
+        .login-hero {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0f172a 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 100px 0 50px 0;
+            overflow-y: auto;
+        }
+
+        .hero-glow {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: 0;
+            opacity: 0.6;
+        }
+
+        .glow-1 {
+            width: 400px;
+            height: 400px;
+            background: #3b82f6;
+            top: -50px;
+            left: 10%;
+        }
+
+        .glow-2 {
+            width: 300px;
+            height: 300px;
+            background: #10b981;
+            bottom: 10%;
+            right: 15%;
+        }
+
+        .login-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .login-glass-wrapper {
+            display: flex;
+            width: 100%;
+            max-width: 1000px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border-radius: 24px;
+            min-height: 600px;
+            transition: 0.3s ease;
+        }
+
+        .login-visuals {
+            flex: 0.9;
+            padding: 3rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 100%);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .visual-content h2 {
+            font-size: 2.5rem;
+            color: var(--white);
+            line-height: 1.2;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .highlight {
+            background: linear-gradient(90deg, #60a5fa, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .visual-content p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.1rem;
+            max-width: 90%;
+        }
+
+        /* form side */
+        .login-form-side {
+            flex: 1.1;
+            background: rgba(255, 255, 255, 0.92);
+            padding: 3rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border-radius: 0 24px 24px 0;
+        }
+
+        .form-header {
+            display: flex;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .auth-tab {
+            background: none;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #94a3b8;
+            cursor: pointer;
+            position: relative;
+            width: 50%;
+        }
+
+        .auth-tab.active {
+            color: var(--primary);
+        }
+
+        .auth-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--primary);
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 1.2rem;
+        }
+
+        .input-wrapper {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 1.2rem;
+            position: relative;
+            width: 100%;
+        }
+
+        .input-wrapper label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #475569;
+            margin-bottom: 0.5rem;
+        }
+
+        .input-wrapper input,
+        .input-wrapper select {
+            padding: 12px 16px;
+            background: #f1f5f9;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            color: var(--text-dark);
+            transition: 0.3s;
+            width: 100%;
+        }
+
+        .input-wrapper input:focus {
+            background: white;
+            border-color: var(--accent);
+            outline: none;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: linear-gradient(to right, #4ade80, #22c55e);
+            color: #064e3b;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.2s;
+            text-transform: uppercase;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(34, 197, 94, 0.3);
+        }
+
+        .mobile-link {
+            margin-top: 1rem;
+            text-align: center;
+            font-size: 0.85rem;
+            color: #64748b;
+            cursor: pointer;
+        }
+
+        .mobile-link span {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* dropdown */
+        .custom-select-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .custom-input {
+            cursor: pointer;
+            background: #f1f5f9 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="%2364748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>') no-repeat right 12px center;
+        }
+
+        .custom-dropdown {
+            position: absolute;
+            top: 105%;
+            left: 0;
+            width: 100%;
+            max-height: 250px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+        }
+
+        .custom-dropdown.show {
+            display: block;
+        }
+
+        .custom-option {
+            padding: 10px 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.95rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .custom-option:hover {
+            background-color: #f1f5f9;
+            color: var(--primary);
+        }
+
+        /* modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(5px);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-box {
+            background: white;
+            width: 400px;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        .modal-msg {
+            color: #64748b;
+            margin-bottom: 25px;
+        }
+
+        .modal-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        @media (max-width: 900px) {
+            .login-glass-wrapper {
+                flex-direction: column;
+                max-width: 500px;
+                margin-top: 20px;
+            }
+
+            .login-form-side {
+                border-radius: 24px;
+            }
+
+            .form-row {
+                flex-direction: column;
+                gap: 1.2rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="container nav-container">
+            <div class="logo">StudentWorkHub<span class="dot">.</span></div>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="#">Find Jobs</a></li>
+            </ul>
+            <div class="auth-buttons">
+                <a href="employerlogin.html" class="btn btn-employer">Employers Login</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="login-hero">
+        <div class="hero-glow glow-1"></div>
+        <div class="hero-glow glow-2"></div>
+        <div class="container login-container">
+            <div class="login-glass-wrapper">
+
+                <div class="login-visuals">
+                    <div class="visual-content">
+                        <h2 id="visual-title">Welcome Back! <br><span class="highlight">Future Leader.</span></h2>
+                        <p id="visual-desc">Log in to access exclusive part-time opportunities tailored for students in
+                            Sri Lanka.</p>
+                    </div>
+                </div>
+
+                <div class="login-form-side">
+                    <div class="form-header">
+                        <button class="auth-tab active" onclick="switchTab('login')" id="tab-login">Login</button>
+                        <button class="auth-tab" onclick="switchTab('register')" id="tab-register">Register</button>
+                    </div>
+
+                    <div id="login-form" class="form-container">
+                        <form id="loginFormActual">
+                            <div class="input-wrapper"><label>Email Address</label><input type="email" id="loginEmail"
+                                    placeholder="Email*" required></div>
+                            <div class="input-wrapper"><label>Password</label><input type="password" id="loginPassword"
+                                    placeholder="Password*" required></div>
+                            <button type="submit" class="btn-submit">LOGIN</button>
+                            <div class="mobile-link" onclick="switchTab('register')">Don't have an account?
+                                <span>Register Now</span>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div id="register-form" class="form-container hidden">
+                        <form id="registerFormActual">
+                            <div class="form-row">
+                                <div class="input-wrapper"><label>First Name</label><input type="text" id="regFirstName"
+                                        placeholder="John" required></div>
+                                <div class="input-wrapper"><label>Last Name</label><input type="text" id="regLastName"
+                                        placeholder="Doe" required></div>
+                            </div>
+                            <div class="input-wrapper"><label>Email Address</label><input type="email" id="regEmail"
+                                    placeholder="student@example.com" required></div>
+                            <div class="form-row">
+                                <div class="input-wrapper">
+                                    <label>Phone</label>
+                                    <div style="display: flex; gap: 10px;">
+                                        <div
+                                            style="background: #e2e8f0; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0 15px; display: flex; align-items: center; font-weight: 600; color: #475569;">
+                                            +94</div>
+                                        <input type="tel" id="regPhone" placeholder="771234567" required
+                                            style="flex:1;">
+                                    </div>
+                                </div>
+                                <div class="input-wrapper"><label>Date of Birth</label><input type="date" id="regDOB"
+                                        required onclick="this.showPicker()"></div>
+                            </div>
+                            <div class="input-wrapper custom-select-container">
+                                <label>City / Town (Sri Lanka)</label>
+                                <input type="text" id="regCitySearch" class="custom-input" placeholder="Select City..."
+                                    autocomplete="off">
+                                <input type="hidden" id="regCityValue">
+                                <div class="custom-dropdown" id="cityList"></div>
+                            </div>
+                            <div class="form-row">
+                                <div class="input-wrapper"><label>Password</label>
+                                    <input type="password" id="regPassword" placeholder="Create Password" required
+                                        oninput="checkStrength(this.value)">
+                                    <div id="password-strength-container" class="password-strength-container"
+                                        style="display:none;">
+                                        <div class="strength-header">
+                                            <span class="strength-text">Strength:</span>
+                                            <span id="strength-text" class="strength-text">Weak</span>
+                                        </div>
+                                        <div class="strength-meter-visual">
+                                            <div class="strength-segment" id="seg-1"></div>
+                                            <div class="strength-segment" id="seg-2"></div>
+                                            <div class="strength-segment" id="seg-3"></div>
+                                            <div class="strength-segment" id="seg-4"></div>
+                                            <div class="strength-segment" id="seg-5"></div>
+                                        </div>
+                                        <div class="password-requirements">
+                                            <div id="req-length" class="req-item"><span class="req-icon"></span> 8+
+                                                Characters</div>
+                                            <div id="req-upper" class="req-item"><span class="req-icon"></span> 1
+                                                Uppercase</div>
+                                            <div id="req-lower" class="req-item"><span class="req-icon"></span> 1
+                                                Lowercase</div>
+                                            <div id="req-number" class="req-item"><span class="req-icon"></span> 1
+                                                Number</div>
+                                            <div id="req-special" class="req-item"><span class="req-icon"></span> 1
+                                                Special Char</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="input-wrapper"><label>Confirm</label><input type="password" id="regConfirm"
+                                        placeholder="Confirm Password" required></div>
+                            </div>
+                            <button type="submit" class="btn-submit">CREATE ACCOUNT</button>
+                            <div class="mobile-link" onclick="switchTab('login')">Already have an account? <span>Login
+                                    Here</span></div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div id="customModal" class="modal-overlay">
+        <div class="modal-box">
+            <h3 class="modal-title" id="modalTitle">Success</h3>
+            <p class="modal-msg" id="modalMsg">Message goes here.</p>
+            <button class="modal-btn" onclick="closeModal()">OK</button>
+        </div>
+    </div>
+
+
+
+    <script>
+        // --- MASTER CITY LIST ---
+        const slCities = [
+            "Colombo", "Dehiwala-Mount Lavinia", "Moratuwa", "Sri Jayawardenepura Kotte", "Negombo",
+            "Kandy", "Kalutara", "Vavuniya", "Galle", "Trincomalee", "Batticaloa", "Jaffna",
+            "Katunayake", "Dambulla", "Kolonnawa", "Anuradhapura", "Ratnapura", "Badulla",
+            "Matara", "Puttalam", "Kegalle", "Panadura", "Beruwala", "Ja-Ela", "Wattala",
+            "Gampaha", "Nuwara Eliya", "Hambantota", "Tangalle", "Monaragala", "Wellawaya",
+            "Ampara", "Kurunegala", "Chilaw", "Mannar", "Point Pedro", "Valvettithurai",
+            "Hikkaduwa", "Weligama", "Ambalangoda", "Gampola", "Nawalapitiya", "Hatton",
+            "Talawakele", "Bandarawela", "Haputale"
+        ].sort();
+
+        const searchInput = document.getElementById('regCitySearch'), hiddenInput = document.getElementById('regCityValue'), cityList = document.getElementById('cityList');
+
+        function renderCities(filter = "") {
+            cityList.innerHTML = "";
+            const filtered = slCities.filter(c => c.toLowerCase().includes(filter.toLowerCase()));
+            if (filtered.length === 0) { cityList.innerHTML = `<div class="custom-option" style="cursor:default; color:#94a3b8;">No results found</div>`; return; }
+            filtered.forEach(city => {
+                const div = document.createElement('div'); div.className = "custom-option"; div.innerHTML = `<span class="icon">📍</span> ${city}`;
+                div.onclick = () => { searchInput.value = city; hiddenInput.value = city; cityList.classList.remove('show'); };
+                cityList.appendChild(div);
+            });
+        }
+
+        if (searchInput) {
+            // CLICK TO CLEAR LOGIC
+            searchInput.addEventListener('click', function () {
+                this.value = '';
+                renderCities();
+                cityList.classList.add('show');
+            });
+
+            searchInput.addEventListener('input', (e) => { cityList.classList.add('show'); renderCities(e.target.value); });
+        }
+        document.addEventListener('click', (e) => { if (!e.target.closest('.custom-select-container') && cityList) cityList.classList.remove('show'); });
+
+        // tab & modal
+        function switchTab(tab) {
+            const loginF = document.getElementById('login-form'), regF = document.getElementById('register-form');
+            const title = document.getElementById('visual-title');
+            if (tab === 'login') {
+                loginF.classList.remove('hidden'); regF.classList.add('hidden');
+                document.getElementById('tab-login').classList.add('active'); document.getElementById('tab-register').classList.remove('active');
+                title.innerHTML = 'Welcome Back! <br><span class="highlight">Future Leader.</span>';
+            } else {
+                regF.classList.remove('hidden'); loginF.classList.add('hidden');
+                document.getElementById('tab-register').classList.add('active'); document.getElementById('tab-login').classList.remove('active');
+                title.innerHTML = 'Start Your <br><span class="highlight">Career Today.</span>';
+            }
+        }
+        function showNotification(title, message) {
+            document.getElementById('modalTitle').innerText = title; document.getElementById('modalMsg').innerText = message;
+            document.getElementById('customModal').classList.add('show');
+        }
+        function closeModal() { document.getElementById('customModal').classList.remove('show'); }
+
+        // PASSWORD STRENGTH LOGIC
+        let isPasswordStrong = false;
+        function checkStrength(password) {
+            const meter = document.getElementById('password-strength-container');
+            const text = document.getElementById('strength-text');
+
+            if (password.length > 0) meter.style.display = 'block';
+            else { meter.style.display = 'none'; return; }
+
+            const reqs = {
+                length: password.length >= 8,
+                upper: /[A-Z]/.test(password),
+                lower: /[a-z]/.test(password),
+                number: /[0-9]/.test(password),
+                special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+            };
+
+            // Update Requirements UI
+            for (const [key, met] of Object.entries(reqs)) {
+                const el = document.getElementById(`req-${key}`);
+                if (met) el.classList.add('met'); else el.classList.remove('met');
+            }
+
+            // Calculate Score
+            let score = 0;
+            if (reqs.length) score++;
+            if (reqs.upper) score++;
+            if (reqs.lower) score++;
+            if (reqs.number) score++;
+            if (reqs.special) score++;
+
+            // Update Segments
+            const labels = ["Weak", "Weak", "Medium", "Good", "Strong"];
+            const classes = ["segment-weak", "segment-weak", "segment-medium", "segment-medium", "segment-strong"];
+            const textClasses = ["text-weak", "text-weak", "text-medium", "text-medium", "text-strong"];
+
+            // Reset all segments
+            for (let i = 1; i <= 5; i++) {
+                const seg = document.getElementById(`seg-${i}`);
+                if (seg) {
+                    seg.className = 'strength-segment'; // reset
+                    if (i <= score) {
+                        seg.classList.add(classes[score - 1]);
+                        if (score === 5) seg.classList.add('active'); // Add glow if strong
+                    }
+                }
+            }
+
+            text.innerText = score > 0 ? labels[score - 1] : "Weak";
+            text.className = `strength-text ${score > 0 ? textClasses[score - 1] : 'text-weak'}`;
+
+            isPasswordStrong = (score === 5);
+        }
+
+
+        // register logic with 16+ AGE CHECK
+        const regForm = document.getElementById('registerFormActual');
+        if (regForm) {
+            const dobInput = document.getElementById('regDOB');
+            const today = new Date();
+            today.setFullYear(today.getFullYear() - 16);
+            const maxDateStr = today.toISOString().split("T")[0];
+            dobInput.max = maxDateStr;
+
+            // Register Logic
+            regForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const pwd = document.getElementById('regPassword').value, cityVal = document.getElementById('regCityValue').value || document.getElementById('regCitySearch').value;
+                const userDob = new Date(dobInput.value);
+                const checkDate = new Date();
+                checkDate.setFullYear(checkDate.getFullYear() - 16);
+
+                if (userDob > checkDate) { showNotification('Age Restriction', 'You must be at least 16 years old to register.'); return; }
+                if (!cityVal) { showNotification('Missing Info', 'Please select a city.'); return; }
+                if (!isPasswordStrong) { showNotification('Weak Password', 'Please create a stronger password meeting all requirements.'); return; }
+                if (pwd !== document.getElementById('regConfirm').value) { showNotification('Error', 'Passwords do not match.'); return; }
+
+                const btn = e.target.querySelector('.btn-submit');
+
+                // --- PHONE VALIDATION ---
+                const phoneInput = document.getElementById('regPhone').value.trim();
+                const phoneRegex = /^(?:0|7)\d{8}$/; // Matches 0771234567 (10 digits) OR 771234567 (9 digits)
+
+                if (!phoneRegex.test(phoneInput)) {
+                    showNotification('Invalid Phone', 'Please enter a valid Sri Lankan mobile number (e.g., 771234567 or 0771234567).');
+                    return;
+                }
+
+                // Normalize to +94 format
+                const normalizedPhone = '+94' + (phoneInput.length === 10 ? phoneInput.substring(1) : phoneInput);
+
+                const originalText = btn.innerText;
+                btn.innerText = "CREATING..."; btn.disabled = true;
+
+                const formData = {
+                    firstName: document.getElementById('regFirstName').value,
+                    lastName: document.getElementById('regLastName').value,
+                    email: document.getElementById('regEmail').value,
+                    phone: normalizedPhone,
+                    dob: document.getElementById('regDOB').value,
+                    city: cityVal, password: pwd
+                };
+
+                try {
+                    const res = await fetch('http://localhost:3000/api/register', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData)
+                    });
+                    const data = await res.json();
+
+                    if (data.success) {
+                        if (data.requireOtp) {
+                            window.location.href = `otp.html?email=${encodeURIComponent(data.email)}&role=student`;
+                            return;
+                        }
+                        // Fallback if not OTP
+                        showNotification('Success', 'Account created! Please login.');
+                        switchTab('login');
+                    } else { showNotification('Registration Failed', data.message); }
+                } catch (err) { showNotification('Error', 'Server connection failed.'); }
+                finally { btn.innerText = "CREATE ACCOUNT"; btn.disabled = false; }
+            });
+        }
+
+        // login logic
+        const logForm = document.getElementById('loginFormActual');
+        if (logForm) {
+            logForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = e.target.querySelector('.btn-submit');
+                const originalText = btn.innerText;
+                btn.innerText = "LOGGING IN..."; btn.disabled = true;
+                const email = document.getElementById('loginEmail').value, password = document.getElementById('loginPassword').value;
+
+                try {
+                    const res = await fetch('http://localhost:3000/api/login', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        localStorage.setItem('studentUser', JSON.stringify({
+                            name: data.userName, email: email, role: data.role, isLoggedIn: true, profilePic: data.profilePic
+                        }));
+                        window.location.href = 'index.html';
+                    } else {
+                        if (data.requireOtp) {
+                            window.location.href = `otp.html?email=${encodeURIComponent(data.email)}&role=student`;
+                            return;
+                        }
+                        showNotification('Login Failed', data.message);
+                    }
+                } catch (err) { showNotification('Error', 'Server connection failed.'); }
+                finally { btn.innerText = originalText; btn.disabled = false; }
+            });
+        }
+    </script>
+</body>
+
+</html>

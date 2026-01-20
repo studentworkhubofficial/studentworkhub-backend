@@ -1,0 +1,58 @@
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: white;
+  font-family: 'Inter', sans-serif;
+}
+
+h1, .font-orbitron {
+  font-family: 'Orbitron', sans-serif;
+}
+
+/* Container styles */
+#gallery-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  cursor: grab;
+  z-index: 0;
+}
+#gallery-container:active {
+  cursor: grabbing;
+}
+#gallery-container canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+}
+
+/* Vignette for subtle effect */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center,
+    rgba(0,0,0,0) 50%, rgba(0,0,0,0.5) 100%);
+  z-index: 1;
+}
+
+/* Fade-in animation */
+@keyframes fadeInSlideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up {
+  animation: fadeInSlideUp 1s ease-out forwards;
+}
+
+/* Layering */
+header { z-index: 1000; }
+#info-display, footer { z-index: 10; }

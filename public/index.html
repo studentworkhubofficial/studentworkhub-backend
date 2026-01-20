@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudentWorkHub - Home</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        /* --- CORE STYLES (Restored Original Theme) --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0f172a;
+            --accent: #3b82f6;
+            --success: #10b981;
+            --text-dark: #1e293b;
+            --text-light: #64748b;
+            --white: #ffffff;
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.5);
+            --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: var(--text-dark);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        a {
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+        /* NAVBAR */
+        .navbar {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-bottom: var(--glass-border);
+            padding: 1.2rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.6rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            cursor: pointer;
+            color: var(--primary);
+        }
+
+        .logo span {
+            color: var(--accent);
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2.5rem;
+        }
+
+        .nav-links a {
+            color: var(--text-dark);
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent);
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 0.7rem 1.5rem;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-block;
+            border: none;
+            transition: 0.3s;
+        }
+
+        .btn-employer {
+            background-color: white;
+            color: var(--text-dark);
+            border: 1px solid #e2e8f0;
+        }
+
+        .btn-employer:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(37, 99, 235, 0.4);
+        }
+
+        /* HERO SECTION (Original Glow Style) */
+        .hero {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0f172a 100%);
+            padding: 8rem 0 6rem 0;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            min-height: 80vh;
+            overflow: hidden;
+        }
+
+        .hero-glow {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(90px);
+            z-index: 0;
+            opacity: 0.5;
+        }
+
+        .glow-1 {
+            width: 400px;
+            height: 400px;
+            background: #3b82f6;
+            top: -100px;
+            left: 10%;
+        }
+
+        .glow-2 {
+            width: 300px;
+            height: 300px;
+            background: #10b981;
+            bottom: 10%;
+            right: 15%;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .hero-title {
+            font-size: 3.8rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            color: white;
+        }
+
+        .highlight {
+            background: linear-gradient(90deg, #60a5fa, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.8);
+            max-width: 600px;
+            margin: 0 auto 2rem auto;
+        }
+
+        /* --- NOTIFICATION & USER MENU (New Features) --- */
+        .nav-actions-logged-in {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .notif-wrapper {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .bell-icon {
+            font-size: 1.4rem;
+            color: #64748b;
+            transition: 0.2s;
+        }
+
+        .bell-icon:hover {
+            color: var(--accent);
+        }
+
+        .notif-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            font-size: 0.65rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            border: 2px solid white;
+            display: none;
+        }
+
+        .notif-dropdown {
+            position: absolute;
+            top: 45px;
+            right: -60px;
+            width: 320px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid #e2e8f0;
+            display: none;
+            z-index: 2000;
+            overflow: hidden;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .notif-dropdown.show {
+            display: block;
+        }
+
+        .notif-header {
+            padding: 12px 15px;
+            background: #f8fafc;
+            font-weight: 700;
+            font-size: 0.9rem;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .notif-list {
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .notif-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .notif-item:hover {
+            background: #f1f5f9;
+        }
+
+        .notif-item.unread {
+            background: #eff6ff;
+            border-left: 3px solid var(--accent);
+        }
+
+        .notif-time {
+            display: block;
+            font-size: 0.7rem;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+
+        /* USER DROPDOWN */
+        .user-menu {
+            position: relative;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 5px 10px;
+            border-radius: 50px;
+            transition: 0.2s;
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid transparent;
+        }
+
+        .user-menu:hover {
+            background: white;
+            border-color: #e2e8f0;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .user-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--primary);
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 55px;
+            right: 0;
+            background: white;
+            width: 180px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid #e2e8f0;
+            display: none;
+            overflow: hidden;
+            z-index: 2000;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .dropdown-menu a {
+            display: block;
+            padding: 10px 15px;
+            font-size: 0.9rem;
+            color: var(--text-dark);
+            transition: 0.2s;
+        }
+
+        .dropdown-menu a:hover {
+            background: #f8fafc;
+            color: var(--accent);
+        }
+
+        .dropdown-menu .logout {
+            color: #ef4444;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .dropdown-menu .logout:hover {
+            background: #fef2f2;
+        }
+
+        /* FEATURED JOBS (Original Card Style) */
+        .featured-jobs {
+            padding: 5rem 0;
+            background-color: #f8fafc;
+        }
+
+        .jobs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+        }
+
+        .job-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid #e2e8f0;
+            transition: 0.3s ease;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .job-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--accent);
+        }
+
+        .premium-border {
+            border-top: 4px solid #f59e0b;
+        }
+
+        .premium-tag {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 1.2rem;
+        }
+
+        .job-title {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .job-company {
+            color: var(--text-light);
+            font-size: 0.95rem;
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .job-details {
+            margin-top: auto;
+            font-size: 0.9rem;
+            color: #64748b;
+            line-height: 1.6;
+        }
+
+        .btn-apply-card {
+            width: 100%;
+            padding: 12px;
+            margin-top: 20px;
+            background: transparent;
+            color: var(--text-dark);
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .job-card:hover .btn-apply-card {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* FOOTER */
+        .footer {
+            background-color: var(--primary);
+            color: white;
+            padding: 4rem 0 2rem 0;
+            margin-top: auto;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer h3 {
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+
+        .footer span {
+            color: var(--accent);
+        }
+
+        .footer p {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            max-width: 300px;
+            margin-top: 10px;
+        }
+
+        .footer-links a {
+            display: block;
+            color: #cbd5e1;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .footer-links a:hover {
+            color: var(--accent);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 2rem;
+            text-align: center;
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media(max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="container nav-container">
+            <a href="index.html" class="logo">StudentWorkHub<span>.</span></a>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="jobs.html">Find Jobs</a></li>
+            </ul>
+
+            <div class="auth-buttons" id="guest-menu">
+                <a href="employerlogin.html" class="btn btn-employer">For Employers</a>
+                <a href="studentslogin.html" class="btn btn-primary">Student Login</a>
+            </div>
+
+            <div class="nav-actions-logged-in hidden" id="student-menu">
+                <div class="notif-wrapper">
+                    <div class="bell-icon" onclick="toggleNotifs()">🔔</div>
+                    <div id="notifBadge" class="notif-badge">0</div>
+                    <div id="notifDropdown" class="notif-dropdown">
+                        <div class="notif-header">
+                            <span>Notifications</span>
+                            <span onclick="toggleNotifs()" style="cursor:pointer; font-weight:400;">&times;</span>
+                        </div>
+                        <div id="notifList" class="notif-list">
+                            <div style="padding:20px; text-align:center; color:#94a3b8; font-size:0.85rem;">No new
+                                notifications</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="user-menu" onclick="toggleDropdown()">
+                    <span class="user-name" id="display-name">User</span>
+                    <img src="" id="avatar-img" class="user-avatar" alt="Profile">
+                    <div class="dropdown-menu" id="userDropdown">
+                        <a href="profile.html">My Profile</a>
+                        <a href="jobs.html">Browse Jobs</a>
+                        <a href="#" onclick="logout()" class="logout">Log Out</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="hero-glow glow-1"></div>
+        <div class="hero-glow glow-2"></div>
+        <div class="container hero-content">
+            <h1 class="hero-title">Your Future Starts <br> <span class="highlight">Right Here.</span></h1>
+            <p class="hero-subtitle">Connect with Sri Lanka's top employers and find part-time jobs that fit your study
+                schedule.</p>
+            <a href="jobs.html" class="btn btn-primary" style="padding: 15px 40px; font-size: 1.1rem;">Browse All
+                Jobs</a>
+        </div>
+    </header>
+
+    <!-- SUBSCRIPTION PLANS SECTION -->
+
+
+    <!-- SUBSCRIPTION PAYMENT MODAL -->
+
+
+    <section class="featured-jobs">
+        <div class="container">
+            <h2 style="margin-bottom: 40px; color: #0f172a; font-size: 2rem;">Featured Premium Jobs</h2>
+            <div class="jobs-grid" id="jobs-grid">
+                <p style="color:#64748b; text-align:center; width:100%;">Loading premium opportunities...</p>
+            </div>
+            <div style="text-align:center; margin-top:50px;">
+                <a href="jobs.html" class="btn btn-employer" style="padding: 12px 30px;">View All Categories →</a>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div>
+                    <h3>StudentWorkHub<span>.</span></h3>
+                    <p>Empowering Sri Lanka's future workforce by connecting students with the best part-time
+                        opportunities.</p>
+                </div>
+                <div class="footer-links" style="text-align:right;">
+                    <a href="jobs.html">Browse Jobs</a>
+                    <a href="employerlogin.html">Post a Job</a>
+                    <a href="admin.html">Admin Portal</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 StudentWorkHub. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // AUTH CHECK
+        const user = JSON.parse(localStorage.getItem('studentUser'));
+
+        document.addEventListener("DOMContentLoaded", () => {
+            if (user && user.isLoggedIn) {
+                // If employer, only allow if viewing subscription plans
+                if (user.role === 'employer') {
+                    if (window.location.hash !== '#subscription') {
+                        window.location.href = 'employerdashboard.html';
+                        return;
+                    }
+
+                    // Specific Menu for Employers on Landing Page
+                    const dropdown = document.getElementById('userDropdown');
+                    if (dropdown) {
+                        dropdown.innerHTML = `
+                            <a href="employerdashboard.html">Dashboard</a>
+                            <a href="#" onclick="logout()" class="logout">Log Out</a>
+                        `;
+                    }
+                }
+
+                // Show Logged In Menu (for both Student and Employer)
+                document.getElementById('guest-menu').classList.add('hidden');
+                document.getElementById('student-menu').classList.remove('hidden');
+
+                document.getElementById('display-name').innerText = user.name || user.userName;
+                const avatar = user.profilePic || user.logo || 'default-profile.png';
+                document.getElementById('avatar-img').src = avatar;
+
+
+                // Load notifications only if generic user or student (employers use different endpoint usually, or same?)
+                // auth.js login saves email. employerdashboard uses /api/notifications/:email too.
+                // So this should work.
+                loadNotifications();
+            }
+            loadPremiumJobs();
+        });
+
+        // CHECK USER & NOTIFICATIONS
+        async function loadNotifications() {
+            try {
+                // Verify user existence first
+                const verifyRes = await fetch(`http://localhost:3000/api/user/${user.email}`);
+                if (verifyRes.status === 404) { logout(); return; }
+
+                const res = await fetch(`http://localhost:3000/api/notifications/${user.email}`);
+                const data = await res.json();
+
+                if (data.success && data.notifications.length > 0) {
+                    const list = document.getElementById('notifList');
+                    list.innerHTML = '';
+                    let unreadCount = 0;
+
+                    data.notifications.forEach(n => {
+                        if (!n.isRead) unreadCount++;
+                        const div = document.createElement('div');
+                        div.className = `notif-item ${n.isRead ? '' : 'unread'}`;
+                        div.onclick = (e) => markAsRead(e, n.id);
+                        div.innerHTML = `
+                            <div style="font-weight:600; color:#334155; margin-bottom:2px;">${n.message}</div>
+                            <span class="notif-time">${new Date(n.createdAt).toLocaleDateString()}</span>
+                        `;
+                        list.appendChild(div);
+                    });
+
+                    const badge = document.getElementById('notifBadge');
+                    if (unreadCount > 0) { badge.innerText = unreadCount; badge.style.display = 'flex'; }
+                    else badge.style.display = 'none';
+                }
+            } catch (err) { console.error("Notif Error", err); }
+        }
+
+        async function markAsRead(e, id) {
+            e.stopPropagation();
+            try {
+                await fetch(`http://localhost:3000/api/notifications/read/${id}`, { method: 'PUT' });
+                loadNotifications(); // Refresh
+            } catch (e) { console.error(e); }
+        }
+
+        // LOAD PREMIUM JOBS
+        async function loadPremiumJobs() {
+            try {
+                const res = await fetch('http://localhost:3000/api/jobs');
+                const data = await res.json();
+                const grid = document.getElementById('jobs-grid');
+
+                if (!data.success || data.jobs.length === 0) {
+                    grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#64748b;">No Featured Jobs available right now.</div>';
+                    return;
+                }
+
+                const premiumJobs = data.jobs.filter(job => job.isPremium === 1).slice(0, 3); // Max 3
+                if (premiumJobs.length === 0) {
+                    grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#64748b;">Check back later for premium listings.</div>';
+                    return;
+                }
+
+                grid.innerHTML = premiumJobs.map(job => `
+                    <div class="job-card premium-border">
+                        <div class="premium-tag">⭐</div>
+                        <h3 class="job-title">${job.jobTitle}</h3>
+                        <div class="job-company"><span>🏢</span> ${job.companyName}</div>
+                        <div class="job-details">
+                            <div>📍 ${job.location}</div>
+                            <div>💰 LKR ${job.payAmount} / ${job.payFrequency}</div>
+                            <div>⏱️ ${job.schedule}</div>
+                        </div>
+                        <button class="btn-apply-card" onclick="window.location.href='jobs.html'">View Details</button>
+                    </div>
+                `).join('');
+            } catch (err) { console.error(err); }
+        }
+
+        // UI TOGGLES
+        function toggleNotifs() {
+            document.getElementById('notifDropdown').classList.toggle('show');
+            document.getElementById('userDropdown').classList.remove('show');
+        }
+        function toggleDropdown() {
+            document.getElementById('userDropdown').classList.toggle('show');
+            document.getElementById('notifDropdown').classList.remove('show');
+        }
+        window.onclick = function (event) {
+            if (!event.target.closest('.notif-wrapper') && !event.target.closest('.user-menu')) {
+                document.getElementById('notifDropdown').classList.remove('show');
+                document.getElementById('userDropdown').classList.remove('show');
+            }
+        }
+        function logout() {
+            localStorage.removeItem('studentUser');
+            window.location.reload();
+        }
+
+        // Load subscription plans on page load for ALL visitors
+        // document.addEventListener("DOMContentLoaded", () => {
+        //     loadSubscriptionPlans();
+        // });
+    </script>
+</body>
+
+</html>

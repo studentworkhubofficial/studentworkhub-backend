@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Portal - StudentWorkHub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* core */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0f172a;
+            color: #fff;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* login */
+        .login-wrapper {
+            display: flex;
+            height: 100%;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .login-card {
+            background: #1e293b;
+            padding: 40px;
+            border-radius: 12px;
+            width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+
+        .login-card input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: white;
+            border-radius: 6px;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            font-weight: 700;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .back-link {
+            display: block;
+            margin-top: 20px;
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        /* dashboard */
+        .dashboard {
+            display: none;
+            height: 100%;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: #1e293b;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #334155;
+        }
+
+        .brand {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .brand span {
+            color: #3b82f6;
+        }
+
+        .menu-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            color: #94a3b8;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .menu-item:hover,
+        .menu-item.active {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .logout {
+            margin-top: auto;
+            color: #ef4444;
+        }
+
+        .content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            background: #f1f5f9;
+            color: #1e293b;
+        }
+
+        .header {
+            margin-bottom: 30px;
+            color: #0f172a;
+        }
+
+        /* STATS GRID */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+        }
+
+        .stat-title {
+            font-size: 0.85rem;
+            color: #64748b;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .stat-icon {
+            float: right;
+            font-size: 1.5rem;
+            opacity: 0.5;
+        }
+
+        /* tables */
+        .data-table {
+            width: 100%;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            background: #f8fafc;
+            padding: 15px;
+            text-align: left;
+            font-size: 0.85rem;
+            color: #64748b;
+            font-weight: 700;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .data-table td {
+            padding: 10px 15px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 0.9rem;
+            vertical-align: middle;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-right: 5px;
+        }
+
+        .btn-view {
+            background: #e0f2fe;
+            color: #0284c7;
+        }
+
+        .btn-delete {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .btn-suspend {
+            background: #fff7ed;
+            color: #c2410c;
+            border: 1px solid #ffedd5;
+        }
+
+        .btn-suspend:hover {
+            background: #ffedd5;
+        }
+
+        /* DROP BOX / ACCORDION */
+        .expanded-row {
+            display: none;
+            background: #f8fafc;
+        }
+
+        .expanded-row.show {
+            display: table-row;
+        }
+
+        .exp-box {
+            padding: 20px;
+            border-left: 4px solid #3b82f6;
+            margin: 10px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .job-mini-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .btn-expand {
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: #64748b;
+            transition: 0.2s;
+        }
+
+        .btn-expand.rotated {
+            transform: rotate(180deg);
+            color: #3b82f6;
+        }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(2px);
+        }
+
+        .modal-box {
+            background: white;
+            width: 500px;
+            padding: 30px;
+            border-radius: 12px;
+            color: #1e293b;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Info Modal Styles */
+        .info-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .info-avatar {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #e2e8f0;
+        }
+
+        .info-initials {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: #3b82f6;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .info-val {
+            font-size: 0.95rem;
+            color: #0f172a;
+            font-weight: 500;
+            word-break: break-word;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .check-container {
+            margin: 20px 0;
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .check-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            font-weight: 500;
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+
+        .check-item input {
+            width: 18px;
+            height: 18px;
+            accent-color: #3b82f6;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        /* Suspended Grid */
+        .suspended-grid {
+            display: grid;
+            gap: 15px;
+        }
+
+        .sus-card {
+            background: #fff1f2;
+            border: 1px solid #fecdd3;
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .proof-link {
+            font-size: 0.8rem;
+            color: #e11d48;
+            text-decoration: underline;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+
+        .decline-box {
+            display: none;
+            margin-top: 15px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 15px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="loginScreen" class="login-wrapper">
+        <div class="login-card">
+            <h2 style="margin-bottom: 5px;">Admin Portal</h2>
+            <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 20px;">Restricted Access Only</p>
+            <form id="adminLogin">
+                <input type="text" id="aUser" placeholder="Username" required>
+                <input type="password" id="aPass" placeholder="Password" required>
+                <button type="submit" class="login-btn">Login</button>
+            </form>
+            <p id="errMsg" style="color: #ef4444; margin-top: 10px; display: none;">Invalid Credentials</p>
+            <a href="index.html" class="back-link">← Back to Home Page</a>
+        </div>
+    </div>
+
+    <div id="dashboard" class="dashboard">
+        <div class="sidebar">
+            <div class="brand">Admin<span>Panel</span></div>
+            <div class="menu-item active" onclick="switchTab('stats')">📊 Statistics</div>
+            <div class="menu-item" onclick="switchTab('pending')">⚠️ Pending Requests</div>
+            <div class="menu-item" onclick="switchTab('accepted')">✅ Accepted Employers</div>
+            <div class="menu-item" onclick="switchTab('declined')">❌ Declined Employers</div>
+            <div class="menu-item" onclick="switchTab('students')">🎓 Manage Students</div>
+            <div class="menu-item" onclick="switchTab('payments')">💰 Subscription Payments</div>
+            <div class="menu-item" onclick="switchTab('suspended')">🚫 Suspended Accounts</div>
+            <div class="menu-item logout" onclick="location.reload()">Log Out</div>
+        </div>
+
+        <div class="content">
+            <div id="sec-stats" class="section active">
+                <div class="header">
+                    <h2>System Statistics</h2>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card"><span class="stat-icon">💼</span>
+                        <div class="stat-title">Active Jobs</div>
+                        <div class="stat-value" id="stat-activeJobs">0</div>
+                    </div>
+                    <div class="stat-card"><span class="stat-icon">🔒</span>
+                        <div class="stat-title">Closed Jobs</div>
+                        <div class="stat-value" id="stat-closedJobs">0</div>
+                    </div>
+                    <div class="stat-card"><span class="stat-icon">🎓</span>
+                        <div class="stat-title">Registered Students</div>
+                        <div class="stat-value" id="stat-students">0</div>
+                    </div>
+                    <div class="stat-card"><span class="stat-icon">✅</span>
+                        <div class="stat-title">Verified Employers</div>
+                        <div class="stat-value" id="stat-verified">0</div>
+                    </div>
+                    <div class="stat-card"><span class="stat-icon">🚫</span>
+                        <div class="stat-title">Rejected Employers</div>
+                        <div class="stat-value" id="stat-rejected">0</div>
+                    </div>
+                </div>
+
+                <div class="header" style="margin-top:40px;">
+                    <h2>Subscription Statistics</h2>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card" style="border-top: 4px solid #cd7f32;">
+                        <span class="stat-icon">🥉</span>
+                        <div class="stat-title">Bronze Plan Users</div>
+                        <div class="stat-value" id="stat-bronze">0</div>
+                    </div>
+                    <div class="stat-card" style="border-top: 4px solid #f59e0b;">
+                        <span class="stat-icon">🥇</span>
+                        <div class="stat-title">Gold Plan Users</div>
+                        <div class="stat-value" id="stat-gold">0</div>
+                    </div>
+                    <div class="stat-card" style="border-top: 4px solid #3b82f6;">
+                        <span class="stat-icon">💎</span>
+                        <div class="stat-title">Platinum Plan Users</div>
+                        <div class="stat-value" id="stat-platinum">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="sec-pending" class="section">
+                <div class="header">
+                    <h2>Pending Verifications</h2>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Company</th>
+                            <th>BR Number</th>
+                            <th>BR File</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pendingTable"></tbody>
+                </table>
+            </div>
+
+            <div id="sec-accepted" class="section">
+                <div class="header">
+                    <h2>Accepted Employers</h2>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>Company</th>
+                            <th>BR Number</th>
+                            <th>Plan</th>
+                            <th>Boosts (Left/Used)</th>
+                            <th>Subscribed</th>
+                            <th>Expires</th>
+                            <th>Verified By</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="acceptedTable"></tbody>
+                </table>
+            </div>
+
+            <div id="sec-declined" class="section">
+                <div class="header">
+                    <h2>Declined Employers</h2>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Company</th>
+                            <th>BR Number</th>
+                            <th>Reason</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="declinedTable"></tbody>
+                </table>
+            </div>
+
+            <div id="sec-students" class="section">
+                <div class="header">
+                    <h2>All Students</h2>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>City</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentsTable"></tbody>
+                </table>
+            </div>
+
+            <div id="sec-payments" class="section">
+                <div class="header">
+                    <h2>Subscription Payment Reviews</h2>
+                    <p style="color: #64748b; font-size: 0.9rem;">Review and approve employer subscription payments</p>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Company</th>
+                            <th>Plan</th>
+                            <th>Amount</th>
+                            <th>Receipt</th>
+                            <th>Submitted</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="paymentsTable">
+                        <tr>
+                            <td colspan="7" style="text-align:center; padding:30px; color:#94a3b8;">Loading payments...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="sec-suspended" class="section">
+                <div class="header">
+                    <h2>Suspended Accounts</h2>
+                </div>
+                <div id="suspendedList" class="suspended-grid">
+                    <p style="color:#64748b;">Loading...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAYMENT REVIEW MODAL -->
+    <div id="paymentModal" class="modal-overlay">
+        <div class="modal-box">
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+                <h3 style="margin:0;">Review Payment</h3>
+                <span onclick="document.getElementById('paymentModal').style.display='none'"
+                    style="cursor:pointer; font-size:1.5rem;">&times;</span>
+            </div>
+
+            <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                <p style="margin: 5px 0;"><strong>Company:</strong> <span id="pm-company">-</span></p>
+                <p style="margin: 5px 0;"><strong>Plan:</strong> <span id="pm-plan">-</span></p>
+                <p style="margin: 5px 0;"><strong>Amount:</strong> LKR <span id="pm-amount">-</span></p>
+                <p style="margin: 5px 0;"><strong>Submitted:</strong> <span id="pm-date">-</span></p>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label style="font-weight: 700; display: block; margin-bottom: 8px;">Payment Receipt:</label>
+                <img id="pm-receipt" src="" alt="Receipt"
+                    style="width: 100%; max-height: 400px; object-fit: contain; border: 1px solid #e2e8f0; border-radius: 8px;">
+            </div>
+
+            <div id="pm-decline-box"
+                style="display: none; margin-top: 15px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+                <label style="font-weight: 700; color: #dc2626; display: block; margin-bottom: 8px;">Decline
+                    Reason:</label>
+                <textarea id="pm-decline-reason" rows="3"
+                    placeholder="e.g., Receipt is unclear, Amount doesn't match, etc."
+                    style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;"></textarea>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button id="pm-btn-approve" onclick="reviewPayment('approve')" class="login-btn"
+                    style="background:#10b981; flex: 1;">✓ Approve & Activate</button>
+                <button id="pm-btn-decline-toggle" onclick="togglePaymentDecline()" class="login-btn"
+                    style="background:#ef4444; flex: 1;">✗ Decline</button>
+                <button id="pm-btn-decline-confirm" onclick="reviewPayment('decline')" class="login-btn"
+                    style="background:#dc2626; flex: 1; display: none;">Confirm Decline</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="verifyModal" class="modal-overlay">
+        <div class="modal-box">
+            <h3 style="margin-bottom: 5px;">Verification Process</h3>
+            <p id="verifyName" style="color: #64748b; font-weight: 600; margin-bottom: 20px;"></p>
+
+            <div id="acceptOptions">
+                <div class="check-container">
+                    <div style="font-size: 0.85rem; color:#94a3b8; margin-bottom:10px;">Select at least one method to
+                        Accept:</div>
+                    <label class="check-item"><input type="checkbox" class="verify-check" value="Checked Website">
+                        Checked Website</label>
+                    <label class="check-item"><input type="checkbox" class="verify-check" value="Called Company"> Called
+                        the Company</label>
+                    <label class="check-item"><input type="checkbox" class="verify-check" value="Physical Visit">
+                        Physical Visit</label>
+                </div>
+            </div>
+
+            <div id="declineOptions" class="decline-box">
+                <label style="font-weight:700; font-size:0.85rem; color:#b91c1c;">Rejection Reason (Required)</label>
+                <textarea id="declineReason" rows="3"
+                    style="width:100%; margin-top:5px; padding:10px; border:1px solid #cbd5e1; border-radius:6px;"
+                    placeholder="e.g. BR document is blurry, Invalid business..."></textarea>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button id="btnAccept" onclick="submitVerification(1)" class="login-btn"
+                    style="background:#10b981;">Accept & Verify</button>
+                <button id="btnDecline" onclick="toggleDecline()" class="login-btn"
+                    style="background:#ef4444;">Decline</button>
+                <button id="btnConfirmDecline" onclick="submitVerification(2)" class="login-btn"
+                    style="background:#dc2626; display:none;">Confirm Rejection</button>
+            </div>
+            <button onclick="document.getElementById('verifyModal').style.display='none'"
+                style="width:100%; margin-top:10px; background:none; border:none; color:#64748b; cursor:pointer;">Cancel</button>
+        </div>
+    </div>
+
+    <div id="infoModal" class="modal-overlay">
+        <div class="modal-box">
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                <h3 style="margin:0;">User Details</h3>
+                <span onclick="document.getElementById('infoModal').style.display='none'"
+                    style="cursor:pointer; font-size:1.5rem;">&times;</span>
+            </div>
+            <div id="infoContent"></div>
+            <button onclick="document.getElementById('infoModal').style.display='none'" class="login-btn"
+                style="background:#e2e8f0; color:#334155; margin-top:20px;">Close</button>
+        </div>
+    </div>
+
+    <div id="jobDetailModal" class="modal-overlay">
+        <div class="modal-box">
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                <h3 id="jdTitle" style="margin:0;">Job Title</h3>
+                <span onclick="document.getElementById('jobDetailModal').style.display='none'"
+                    style="cursor:pointer; font-size:1.5rem;">&times;</span>
+            </div>
+            <div id="jdContent" style="line-height:1.6; color:#334155;"></div>
+        </div>
+    </div>
+
+    <div id="suspendModal" class="modal-overlay">
+        <div class="modal-box">
+            <h3 style="color:#dc2626; margin-bottom:5px;">Suspend Account</h3>
+            <p style="color:#64748b; font-size:0.9rem; margin-bottom:20px;">This action is permanent. The user will be
+                blocked.</p>
+            <form id="suspendForm">
+                <input type="hidden" id="suspendId">
+                <div style="margin-bottom:15px;">
+                    <label style="font-weight:700; font-size:0.85rem;">Reason (Required)</label>
+                    <textarea id="susReason" rows="3" required
+                        style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></textarea>
+                </div>
+                <div style="margin-bottom:15px;">
+                    <label style="font-weight:700; font-size:0.85rem;">Evidence (Screenshots - Max 5)</label>
+                    <input type="file" id="susFiles" multiple accept="image/*" style="width:100%; margin-top:5px;">
+                </div>
+                <button type="submit" class="login-btn" style="background:#dc2626;">Confirm Suspension</button>
+                <button type="button" onclick="document.getElementById('suspendModal').style.display='none'"
+                    style="width:100%; margin-top:10px; background:none; border:none; color:#64748b; cursor:pointer;">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Generic Alert/Confirm Modal -->
+    <div id="genericModal" class="modal-overlay">
+        <div class="modal-box" style="width: 400px; text-align: center;">
+            <div id="modalIcon" style="font-size: 3rem; margin-bottom: 15px;">⚠️</div>
+            <h3 id="modalTitle" style="margin-bottom: 10px; font-weight: 800; color: #1e293b;">Alert</h3>
+            <p id="modalMessage" style="color: #64748b; margin-bottom: 25px; font-size: 0.95rem;">Message goes here.</p>
+            <div id="modalButtons" style="display: flex; gap: 10px; justify-content: center;">
+                <button id="modalCancelBtn" class="login-btn"
+                    style="background: #e2e8f0; color: #475569; padding: 10px 20px; font-size: 0.9rem; margin-top:0;">Cancel</button>
+                <button id="modalConfirmBtn" class="login-btn"
+                    style="background: #0f172a; padding: 10px 20px; font-size: 0.9rem; margin-top:0;">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentData = {};
+        let selectedEmpId = null;
+        let selectedPaymentId = null;
+        let adminUser = localStorage.getItem('adminUser') || 'Admin';
+
+        document.getElementById('adminLogin').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const u = document.getElementById('aUser').value, p = document.getElementById('aPass').value;
+            const res = await fetch('http://localhost:3000/api/admin/login', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: u, password: p })
+            });
+            const data = await res.json();
+            if (data.success) {
+                adminUser = data.username;
+                localStorage.setItem('adminUser', adminUser);
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'flex';
+                loadData();
+                loadPayments();
+            } else document.getElementById('errMsg').style.display = 'block';
+        });
+
+        async function loadData() {
+            const res = await fetch('http://localhost:3000/api/admin/data');
+            currentData = await res.json();
+
+            if (currentData.stats) {
+                document.getElementById('stat-activeJobs').innerText = currentData.stats.activeJobs;
+                document.getElementById('stat-closedJobs').innerText = currentData.stats.closedJobs;
+                document.getElementById('stat-students').innerText = currentData.stats.totalStudents;
+                document.getElementById('stat-verified').innerText = currentData.stats.verifiedEmployers;
+                document.getElementById('stat-rejected').innerText = currentData.stats.rejectedEmployers;
+
+                // Subscription Stats
+                document.getElementById('stat-bronze').innerText = currentData.stats.bronze || 0;
+                document.getElementById('stat-gold').innerText = currentData.stats.gold || 0;
+                document.getElementById('stat-platinum').innerText = currentData.stats.platinum || 0;
+            }
+            renderTables();
+        }
+
+        // Load subscription payments
+        async function loadPayments() {
+            try {
+                const res = await fetch('http://localhost:3000/api/admin/subscription-payments');
+                const data = await res.json();
+
+                if (data.success && data.payments) {
+                    const tbody = document.getElementById('paymentsTable');
+
+                    if (data.payments.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:#94a3b8;">No payment submissions yet.</td></tr>';
+                        return;
+                    }
+
+                    tbody.innerHTML = data.payments.map(p => {
+                        const statusBadge = p.status === 'pending' ? '<span style="background:#fffbeb; color:#92400e; padding:4px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">PENDING</span>' :
+                            p.status === 'approved' ? '<span style="background:#dcfce7; color:#166534; padding:4px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">APPROVED</span>' :
+                                '<span style="background:#fee2e2; color:#dc2626; padding:4px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">DECLINED</span>';
+
+                        return `
+                            <tr>
+                                <td style="font-weight:700;">${p.companyName || p.employerEmail}</td>
+                                <td style="text-transform:uppercase; color:#3b82f6; font-weight:600;">${p.planType}</td>
+                                <td>LKR ${p.amount.toLocaleString()}</td>
+                                <td><a href="${p.receiptUrl}" target="_blank" style="color:#3b82f6; font-weight:600;">View</a></td>
+                                <td style="font-size:0.85rem;">${new Date(p.submittedAt).toLocaleDateString()}</td>
+                                <td>${statusBadge}</td>
+                                <td>
+                                    ${p.status === 'pending' ?
+                                `<button class="action-btn btn-view" onclick="openPaymentReview(${p.id}, '${p.companyName}', '${p.planType}', ${p.amount}, '${p.receiptUrl}', '${new Date(p.submittedAt).toLocaleString()}')">Review</button>` :
+                                `<span style="color:#94a3b8; font-size:0.85rem;">Reviewed</span>`
+                            }
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            } catch (err) {
+                console.error('Error loading payments:', err);
+            }
+        }
+
+        function openPaymentReview(id, company, plan, amount, receiptUrl, date) {
+            selectedPaymentId = id;
+            document.getElementById('pm-company').innerText = company;
+            document.getElementById('pm-plan').innerText = plan.toUpperCase();
+            document.getElementById('pm-amount').innerText = amount.toLocaleString();
+            document.getElementById('pm-date').innerText = date;
+            document.getElementById('pm-receipt').src = receiptUrl;
+
+            // Reset UI
+            document.getElementById('pm-decline-box').style.display = 'none';
+            document.getElementById('pm-btn-approve').style.display = 'inline-block';
+            document.getElementById('pm-btn-decline-toggle').style.display = 'inline-block';
+            document.getElementById('pm-btn-decline-confirm').style.display = 'none';
+            document.getElementById('pm-decline-reason').value = '';
+
+            document.getElementById('paymentModal').style.display = 'flex';
+        }
+
+        function togglePaymentDecline() {
+            document.getElementById('pm-decline-box').style.display = 'block';
+            document.getElementById('pm-btn-approve').style.display = 'none';
+            document.getElementById('pm-btn-decline-toggle').style.display = 'none';
+            document.getElementById('pm-btn-decline-confirm').style.display = 'inline-block';
+        }
+
+        async function reviewPayment(action) {
+            const endpoint = action === 'approve' ?
+                `http://localhost:3000/api/admin/subscription-payments/${selectedPaymentId}/approve` :
+                `http://localhost:3000/api/admin/subscription-payments/${selectedPaymentId}/decline`;
+
+            const body = { reviewedBy: adminUser };
+
+            if (action === 'decline') {
+                const reason = document.getElementById('pm-decline-reason').value.trim();
+                if (!reason) {
+                    alert('Please provide a reason for declining');
+                    return;
+                }
+                body.reason = reason;
+            }
+
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    alert(action === 'approve' ? '✅ Payment approved and subscription activated!' : '❌ Payment declined');
+                    document.getElementById('paymentModal').style.display = 'none';
+                    loadPayments();
+                } else {
+                    alert('Error: ' + (data.message || 'Failed to process payment'));
+                }
+            } catch (err) {
+                console.error('Error reviewing payment:', err);
+                alert('Error processing payment review');
+            }
+        }
+
+        function renderTables() {
+            const getBrLink = (url) => url ? `<a href="${url}" target="_blank" style="color:#3b82f6; font-weight:600;">View PDF</a>` : '<span style="color:#94a3b8;">None</span>';
+
+            // Pending
+            document.getElementById('pendingTable').innerHTML = currentData.pending.map(e => `
+                <tr>
+                    <td style="font-weight:700;">${e.companyName}</td><td>${e.brNumber}</td><td>${getBrLink(e.brCertificate)}</td>
+                    <td><button class="action-btn btn-view" onclick="openVerify(${e.id}, '${e.companyName}')">Review</button></td>
+                </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;">No pending requests.</td></tr>';
+
+            // Accepted (With Accordion)
+            document.getElementById('acceptedTable').innerHTML = currentData.accepted.map(e => {
+
+                // Calculate Subscription Info
+                let planBadge = '<span style="background:#f1f5f9; color:#64748b; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">FREE</span>';
+                let subDate = '-';
+                let expDate = '-';
+                let boostInfo = '<span style="color:#94a3b8; font-size:0.85rem;">-</span>';
+
+                if (e.currentPlan && e.currentPlan.toLowerCase() !== 'free') {
+                    const planLower = e.currentPlan.toLowerCase();
+                    const color = planLower === 'bronze' ? '#cd7f32' : planLower === 'gold' ? '#f59e0b' : '#3b82f6';
+                    const bg = planLower === 'bronze' ? '#fff7ed' : planLower === 'gold' ? '#fffbeb' : '#eff6ff';
+                    planBadge = `<span style="background:${bg}; color:${color}; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700; text-transform:uppercase;">${e.currentPlan}</span>`;
+
+                    // Boost Calculation
+                    const limits = { bronze: 1, gold: 3, platinum: 5 };
+                    const limit = limits[planLower] || 0;
+                    const remaining = e.boostsRemaining !== undefined ? e.boostsRemaining : 0;
+                    const used = limit - remaining;
+                    boostInfo = `<span style="font-weight:700; color:${color};">${remaining} Left</span> <span style="color:#94a3b8; font-size:0.8rem;">/ ${used} Used</span>`;
+
+                    if (e.subscriptionExpiresAt) {
+                        const exp = new Date(e.subscriptionExpiresAt);
+                        expDate = exp.toLocaleDateString();
+
+                        // Approx start date (Expires - 30 days)
+                        const start = new Date(exp);
+                        start.setDate(start.getDate() - 30);
+                        subDate = start.toLocaleDateString() + ' ' + start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        expDate += ' ' + exp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    }
+                }
+
+                return `
+                <tr>
+                    <td style="text-align:center;"><button class="btn-expand" id="btn-exp-${e.id}" onclick="toggleEmployerRow(${e.id})">▼</button></td>
+                    <td style="font-weight:700;">${e.companyName}</td>
+                    <td>${e.brNumber}</td>
+                    <td>${planBadge}</td>
+                    <td>${boostInfo}</td>
+                    <td style="font-size:0.85rem;">${subDate}</td>
+                    <td style="font-size:0.85rem;">${expDate}</td>
+                    <td><span style="color:#10b981; font-weight:600;">${e.verifiedBy || 'Admin'}</span></td>
+                    <td>
+                        <button class="action-btn btn-view" onclick="viewDetails('employer', ${e.id})">Info</button>
+                        <button class="action-btn btn-delete" onclick="deleteUser('employer', ${e.id})">Remove</button>
+                    </td>
+                </tr>
+                <tr id="exp-row-${e.id}" class="expanded-row">
+                    <td colspan="8">
+                        <div class="exp-box">
+                            <h4 style="margin-top:0; color:#3b82f6;">Jobs Posted</h4>
+                            <div id="job-list-${e.id}" style="font-size:0.9rem; color:#64748b;">Loading jobs...</div>
+                        </div>
+                    </td>
+                </tr>
+            `}).join('') || '<tr><td colspan="8" style="text-align:center;">No accepted employers.</td></tr>';
+
+            // Declined - NOW SHOWS REASON
+            document.getElementById('declinedTable').innerHTML = currentData.declined.map(e => `
+                <tr>
+                    <td style="font-weight:700;">${e.companyName}</td><td>${e.brNumber}</td>
+                    <td style="color:#b91c1c; font-size:0.85rem;">${e.rejectionReason || 'No Reason Provided'}</td>
+                    <td><button class="action-btn btn-delete" onclick="deleteUser('employer', ${e.id})">Delete</button></td>
+                </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;">No declined employers.</td></tr>';
+
+            // Students
+            document.getElementById('studentsTable').innerHTML = currentData.students.map(s => `
+                <tr>
+                    <td style="font-weight:700;">${s.firstName} ${s.lastName}</td><td>${s.email}</td><td>${s.city}</td>
+                    <td>
+                        <button class="action-btn btn-view" onclick="viewDetails('student', ${s.id})">Info</button>
+                        <button class="action-btn btn-suspend" onclick="openSuspend(${s.id})">Suspend</button>
+                        <button class="action-btn btn-delete" onclick="deleteUser('student', ${s.id})">Delete</button>
+                    </td>
+                </tr>`).join('');
+        }
+
+        // --- VERIFY LOGIC WITH REASON ---
+        function openVerify(id, name) {
+            selectedEmpId = id;
+            document.getElementById('verifyName').innerText = name;
+
+            // Reset UI
+            document.getElementById('acceptOptions').style.display = 'block';
+            document.getElementById('declineOptions').style.display = 'none';
+            document.getElementById('btnAccept').style.display = 'inline-block';
+            document.getElementById('btnDecline').style.display = 'inline-block';
+            document.getElementById('btnConfirmDecline').style.display = 'none';
+            document.querySelectorAll('.verify-check').forEach(c => c.checked = false);
+            document.getElementById('declineReason').value = '';
+
+            document.getElementById('verifyModal').style.display = 'flex';
+        }
+
+        function toggleDecline() {
+            document.getElementById('acceptOptions').style.display = 'none';
+            document.getElementById('declineOptions').style.display = 'block';
+            document.getElementById('btnAccept').style.display = 'none';
+            document.getElementById('btnDecline').style.display = 'none';
+            document.getElementById('btnConfirmDecline').style.display = 'inline-block';
+        }
+
+        async function submitVerification(status) {
+            let body = { id: selectedEmpId, status, verifiedBy: adminUser };
+
+            if (status === 1) { // Accept
+                let methods = [];
+                document.querySelectorAll('.verify-check:checked').forEach(c => methods.push(c.value));
+                if (methods.length === 0) { alert('Please select at least one verification method.'); return; }
+                body.methods = methods.join(', ');
+            } else { // Decline
+                const reason = document.getElementById('declineReason').value;
+                if (!reason.trim()) { alert('Please provide a reason for rejection.'); return; }
+                body.reason = reason;
+            }
+
+            const btn = status === 1 ? document.getElementById('btnAccept') : document.getElementById('btnConfirmDecline');
+            const originalText = btn.innerText;
+            btn.innerText = "Processing..."; btn.disabled = true;
+
+            try {
+                await fetch('http://localhost:3000/api/admin/verify-employer', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                document.getElementById('verifyModal').style.display = 'none';
+                loadData();
+            } finally {
+                // Reset button state
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        async function toggleEmployerRow(id) {
+            const row = document.getElementById(`exp-row-${id}`);
+            const btn = document.getElementById(`btn-exp-${id}`);
+            const list = document.getElementById(`job-list-${id}`);
+
+            if (row.classList.contains('show')) {
+                row.classList.remove('show');
+                btn.classList.remove('rotated');
+            } else {
+                row.classList.add('show');
+                btn.classList.add('rotated');
+                const res = await fetch(`http://localhost:3000/api/admin/employer-details/${id}`);
+                const data = await res.json();
+
+                if (data.success && data.jobs.length > 0) {
+                    list.innerHTML = `<div style="margin-bottom:10px; font-weight:700;">Total Jobs: ${data.jobs.length}</div>` +
+                        data.jobs.map(j => {
+                            let boostBadge = '';
+                            if (j.isPremium) {
+                                let exp = '';
+                                if (j.promotedAt) {
+                                    const pDate = new Date(j.promotedAt);
+                                    pDate.setDate(pDate.getDate() + 10);
+                                    exp = 'Exp: ' + pDate.toLocaleDateString();
+                                }
+                                boostBadge = `<span style="background:#8b5cf6; color:white; padding:2px 8px; border-radius:12px; font-size:0.75rem; margin-left:8px;">⚡ Boosted (${exp})</span>`;
+                            }
+                            return `
+                        <div class="job-mini-item">
+                            <span>${j.jobTitle} ${boostBadge} <span style="font-size:0.8rem; color:#94a3b8;">(${j.status})</span></span>
+                            <button class="action-btn btn-view" onclick='showJobDetail(${JSON.stringify(j).replace(/'/g, "&#39;")})'>More Infos</button>
+                        </div>
+                    `}).join('');
+                } else {
+                    list.innerHTML = 'No jobs posted yet.';
+                }
+            }
+        }
+        function showJobDetail(job) {
+            document.getElementById('jdTitle').innerText = job.jobTitle;
+            document.getElementById('jdContent').innerHTML = `
+                <p><strong>Category:</strong> ${job.category}</p>
+                <p><strong>Pay:</strong> LKR ${job.payAmount} (${job.payFrequency})</p>
+                <p><strong>Schedule:</strong> ${job.schedule} (${job.hoursPerDay} hrs/day)</p>
+                <p><strong>Location:</strong> ${job.location}</p>
+                <p><strong>Status:</strong> ${job.isPremium ? '<span style="color:#8b5cf6; font-weight:700;">⚡ Premium Promoted</span>' : 'Standard Posting'}</p>
+                <p><strong>Deadline:</strong> ${job.deadline ? new Date(job.deadline).toLocaleDateString() : 'None'}</p>
+                <p><strong>Description:</strong><br>${job.description}</p>
+            `;
+            document.getElementById('jobDetailModal').style.display = 'flex';
+        }
+
+        // --- SUSPEND LOGIC ---
+        function openSuspend(id) {
+            document.getElementById('suspendId').value = id;
+            document.getElementById('susReason').value = '';
+            document.getElementById('susFiles').value = '';
+            document.getElementById('suspendModal').style.display = 'flex';
+        }
+
+        document.getElementById('suspendForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('suspendId').value;
+            const reason = document.getElementById('susReason').value;
+            const files = document.getElementById('susFiles').files;
+
+            const formData = new FormData();
+            formData.append('userId', id);
+            formData.append('reason', reason);
+            for (let i = 0; i < files.length; i++) formData.append('proof', files[i]);
+
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.innerText = "Suspending..."; btn.disabled = true;
+
+            try {
+                const res = await fetch('http://localhost:3000/api/admin/suspend-student', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.success) {
+                    showCustomModal({ type: 'success', title: 'Suspended', message: 'Account Suspended Successfully' });
+                    document.getElementById('suspendModal').style.display = 'none';
+                    loadData();
+                } else showCustomModal({ type: 'error', title: 'Error', message: data.message });
+            } catch (e) { showCustomModal({ type: 'error', title: 'Error', message: 'Connection Error' }); }
+            finally { btn.innerText = "Confirm Suspension"; btn.disabled = false; }
+        });
+
+        async function loadSuspended() {
+            const res = await fetch('http://localhost:3000/api/admin/suspended');
+            const data = await res.json();
+            const container = document.getElementById('suspendedList');
+
+            if (data.success && data.suspended.length > 0) {
+                container.innerHTML = data.suspended.map(u => {
+                    const proofs = JSON.parse(u.proofFiles || '[]');
+                    const proofLinks = proofs.map((p, i) => `< span class="proof-link" onclick = "window.open('${p}', '_blank')" > Proof ${i + 1}</span > `).join('');
+                    return `
+                < div class="sus-card" >
+                            <div>
+                                <div style="font-weight:700; color:#991b1b;">${u.email}</div>
+                                <div style="font-size:0.9rem; color:#b91c1c;"><strong>Reason:</strong> ${u.reason}</div>
+                                <div style="font-size:0.8rem; color:#7f1d1d; margin-top:5px;">Suspended: ${new Date(u.suspendedAt).toLocaleDateString()}</div>
+                            </div>
+                            <div>${proofLinks || '<span style="font-size:0.8rem; color:#94a3b8;">No Proofs</span>'}</div>
+                        </div >
+                `;
+                }).join('');
+            } else { container.innerHTML = '<p style="text-align:center; color:#94a3b8;">No suspended accounts.</p>'; }
+        }
+
+        // --- EXISTING UTILS ---
+        function viewDetails(type, id) {
+            const data = type === 'student' ? currentData.students : currentData.accepted;
+            const item = data.find(i => i.id === id);
+            if (!item) return;
+            const content = document.getElementById('infoContent');
+            if (type === 'student') {
+                const avatar = item.profilePic ? `< img src = "${item.profilePic}" class="info-avatar" > ` : ` < div class="info-initials" > ${item.firstName[0]}</div > `;
+                const cvLink = item.cvFile ? `< a href = "${item.cvFile}" target = "_blank" style = "color:#3b82f6; font-weight:600;" > Download CV</a > ` : 'Not Uploaded';
+                content.innerHTML = `
+                < div class="info-header" > ${avatar} <div><h3 style="margin:0;">${item.firstName} ${item.lastName}</h3><p style="margin:0; color:#64748b; font-size:0.9rem;">Student</p></div></div >
+                    <div class="info-grid">
+                        <div class="info-item"><span class="info-label">Email</span><span class="info-val">${item.email}</span></div>
+                        <div class="info-item"><span class="info-label">City</span><span class="info-val">${item.city || 'N/A'}</span></div>
+                        <div class="info-item full-width"><span class="info-label">CV / Resume</span><span class="info-val">${cvLink}</span></div>
+                    </div>`;
+            } else {
+                const logo = item.logo ? `< img src = "${item.logo}" class="info-avatar" > ` : ` < div class="info-initials" style = "border-radius:12px;" > ${item.companyName[0]}</div > `;
+                content.innerHTML = `
+                < div class="info-header" > ${logo} <div><h3 style="margin:0;">${item.companyName}</h3><p style="margin:0; color:#64748b; font-size:0.9rem;">${item.industry}</p></div></div >
+                    <div class="info-grid">
+                        <div class="info-item"><span class="info-label">BR Number</span><span class="info-val">${item.brNumber}</span></div>
+                        <div class="info-item"><span class="info-label">City</span><span class="info-val">${item.city}</span></div>
+                        <div class="info-item full-width"><span class="info-label">Email</span><span class="info-val">${item.email}</span></div>
+                        <div class="info-item full-width"><span class="info-label">Verification</span><span class="info-val" style="color:#10b981;">Approved by ${item.verifiedBy}</span></div>
+                    </div>`;
+            }
+            document.getElementById('infoModal').style.display = 'flex';
+        }
+
+        async function deleteUser(type, id) {
+            showCustomModal({
+                type: 'confirm',
+                title: 'Delete User',
+                message: 'Permanently delete this user?',
+                onConfirm: async () => {
+                    await fetch(`http://localhost:3000/api/admin/delete-user/${type}/${id}`, { method: 'DELETE' });
+                    loadData();
+                    showCustomModal({ type: 'success', title: 'Deleted', message: 'User deleted successfully' });
+                }
+            });
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.section').forEach(e => e.classList.remove('active'));
+            document.getElementById(`sec-${tab}`).classList.add('active');
+            document.querySelectorAll('.menu-item').forEach(e => e.classList.remove('active'));
+            event.target.classList.add('active');
+            if (tab === 'suspended') loadSuspended();
+        }
+        function showCustomModal({ type = 'info', title, message, onConfirm = null }) {
+            const modal = document.getElementById('genericModal');
+            const icon = document.getElementById('modalIcon');
+            const titleEl = document.getElementById('modalTitle');
+            const msgEl = document.getElementById('modalMessage');
+            const confirmBtn = document.getElementById('modalConfirmBtn');
+            const cancelBtn = document.getElementById('modalCancelBtn');
+
+            titleEl.innerText = title;
+            msgEl.innerText = message;
+
+            // Icon & Color Logic
+            if (type === 'success') {
+                icon.innerText = '✅';
+                confirmBtn.style.background = '#10b981'; // Green
+            } else if (type === 'error') {
+                icon.innerText = '❌';
+                confirmBtn.style.background = '#ef4444'; // Red
+            } else if (type === 'warning' || type === 'confirm') {
+                icon.innerText = '⚠️';
+                confirmBtn.style.background = '#0f172a'; // Dark
+            } else {
+                icon.innerText = 'ℹ️';
+                confirmBtn.style.background = '#3b82f6'; // Blue
+            }
+
+            // Clone buttons to remove old listeners
+            const newConfirmBtn = confirmBtn.cloneNode(true);
+            confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+
+            const newCancelBtn = cancelBtn.cloneNode(true);
+            cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+
+            if (onConfirm) {
+                newCancelBtn.style.display = 'inline-block';
+                newCancelBtn.onclick = () => { modal.style.display = 'none'; };
+
+                newConfirmBtn.innerText = 'Confirm';
+                newConfirmBtn.onclick = () => {
+                    modal.style.display = 'none';
+                    onConfirm();
+                };
+            } else {
+                newCancelBtn.style.display = 'none';
+                newConfirmBtn.innerText = 'OK';
+                newConfirmBtn.onclick = () => { modal.style.display = 'none'; };
+            }
+
+            modal.style.display = 'flex';
+        }
+    </script>
+</body>
+
+</html>
