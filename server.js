@@ -11,7 +11,6 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-
 // Helper: Generate OTP
 function generateOTP() {
     return Math.floor(100000 + Math.random() * 900000).toString();
@@ -26,9 +25,14 @@ const pool = mysql.createPool({
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '12121212',
     database: process.env.DB_NAME || 'studentworkhub',
+    port: process.env.DB_PORT || 3306, // Default to 3306 if not in env
     waitForConnections: true,
     connectionLimit: 10,
-    queueLimit: 0
+    queueLimit: 0,
+    // THE FIX FOR AIVEN DATABASE:
+    ssl: {
+        rejectUnauthorized: false
+    }
 });
 
 // ===================================================
@@ -37,7 +41,14 @@ const pool = mysql.createPool({
 
 app.use(express.static('public'));
 app.use('/uploads', express.static('uploads'));
-app.use(cors());
+
+// Updated CORS to allow connections from anywhere (Fixes connection errors)
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(bodyParser.json());
 
 // Ensure Uploads Directory Exists
@@ -68,7 +79,7 @@ const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
         user: 'studentworkhubofficial@gmail.com',
-        pass: 'tapn iurf qevx zvto' // Your App Password
+        pass: process.env.EMAIL_PASS || 'tapn iurf qevx zvto' // Better to use Env Var
     }
 });
 
