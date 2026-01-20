@@ -1270,19 +1270,34 @@ app.delete('/api/user/photo/:email', async (req, res, next) => {
 });
 
 // ===================================================
-// ================== TEMP FIX ROUTE =================
+// ============= FINAL DB FIX ROUTE ==================
 // ===================================================
-// Keep this in case you need to re-run it
-app.get('/fix-database', async (req, res) => {
+app.get('/fix-admin-db', async (req, res) => {
     try {
-        await pool.query('ALTER TABLE employers ADD COLUMN brCertificate VARCHAR(500)');
-        try { await pool.query('ALTER TABLE employers ADD COLUMN otp_code VARCHAR(10)'); } catch (e) {}
-        try { await pool.query('ALTER TABLE employers ADD COLUMN otp_created_at DATETIME'); } catch (e) {}
-        try { await pool.query('ALTER TABLE employers ADD COLUMN is_email_verified TINYINT DEFAULT 0'); } catch (e) {}
+        const queries = [
+            "ALTER TABLE employers ADD COLUMN isAddressVerified TINYINT DEFAULT 0",
+            "ALTER TABLE employers ADD COLUMN currentPlan VARCHAR(50) DEFAULT 'free'",
+            "ALTER TABLE employers ADD COLUMN subscriptionExpiresAt DATETIME",
+            "ALTER TABLE employers ADD COLUMN jobPostsRemaining INT DEFAULT 2",
+            "ALTER TABLE employers ADD COLUMN boostsRemaining INT DEFAULT 0",
+            "ALTER TABLE employers ADD COLUMN verifiedBy VARCHAR(100)",
+            "ALTER TABLE employers ADD COLUMN rejectionReason TEXT",
+            "ALTER TABLE employers ADD COLUMN verificationMethods TEXT"
+        ];
+
+        let results = [];
+        for (const q of queries) {
+            try {
+                await pool.query(q);
+                results.push(`✅ Executed: ${q}`);
+            } catch (err) {
+                results.push(`⚠️ Skipped (Duplicate?): ${err.message}`);
+            }
+        }
         
-        res.send('<h1>✅ SUCCESS! Database Fixed.</h1>');
+        res.send(`<h1>Database Update Log</h1><pre>${results.join('\n')}</pre><br><a href='/api/admin/data'>Try Admin Data Link Now</a>`);
     } catch (err) {
-        res.send('<h1>Error or Already Fixed:</h1> <p>' + err.message + '</p>');
+        res.send(`<h1>Critical Error</h1><p>${err.message}</p>`);
     }
 });
 
