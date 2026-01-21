@@ -484,10 +484,10 @@ app.get('/api/student/applications/:email', async (req, res, next) => {
 app.get('/api/subscription/plans', (req, res) => {
     res.json({
         success: true, plans: [
-            { id: 'free', name: 'FREE PLAN', price: 0, jobPosts: 2, features: ['2 Active Job Posts', 'Standard Visibility', 'Basic Support'] },
-            { id: 'bronze', name: 'BRONZE PLAN', price: 3500, jobPosts: 6, features: ['6 Active Job Posts', '1 Boost included', 'Email Support'] },
-            { id: 'gold', name: 'GOLD PLAN', price: 7500, jobPosts: 10, features: ['10 Active Job Posts', '3 Boosts included', 'Priority Support'] },
-            { id: 'platinum', name: 'PLATINUM PLAN', price: 14000, jobPosts: -1, features: ['Unlimited Job Posts', '5 Boosts included', '24/7 Dedicated Support'] }
+            { id: 'free', name: 'FREE PLAN', price: 0, jobPosts: 2, emoji: '🏢', features: ['2 Active Job Posts', 'Standard Visibility', 'Basic Support'] },
+            { id: 'bronze', name: 'BRONZE PLAN', price: 3500, jobPosts: 6, emoji: '🥉', features: ['6 Active Job Posts', '1 Boost included', 'Email Support'] },
+            { id: 'gold', name: 'GOLD PLAN', price: 7500, jobPosts: 10, emoji: '🥇', features: ['10 Active Job Posts', '3 Boosts included', 'Priority Support'] },
+            { id: 'platinum', name: 'PLATINUM PLAN', price: 14000, jobPosts: -1, emoji: '💎', features: ['Unlimited Job Posts', '5 Boosts included', '24/7 Dedicated Support'] }
         ]
     });
 });
