@@ -1446,6 +1446,7 @@ app.get('/force-update', async (req, res) => {
             )`
         ];
 
+
         let log = "<h2>✅ Super Database Update Log</h2><ul>";
         for (const q of updates) {
             try {
@@ -1463,6 +1464,38 @@ app.get('/force-update', async (req, res) => {
         res.send(log + "</ul><br><h3>👉 <a href='/api/admin/data'>Check Admin Data Now</a></h3>");
     } catch (err) {
         res.send("<h1>❌ Fatal Error</h1><p>" + err.message + "</p>");
+    }
+});
+
+// NEW: FIX DB SCHEMA ROUTE (Added to fix 'Unknown column otp_code')
+app.get('/fix-db-schema', async (req, res) => {
+    try {
+        const updates = [
+            "ALTER TABLE users ADD COLUMN otp_code VARCHAR(10)",
+            "ALTER TABLE users ADD COLUMN otp_created_at DATETIME",
+            "ALTER TABLE users ADD COLUMN is_email_verified TINYINT(1) DEFAULT 0",
+
+            "ALTER TABLE employers ADD COLUMN otp_code VARCHAR(10)",
+            "ALTER TABLE employers ADD COLUMN otp_created_at DATETIME",
+            "ALTER TABLE employers ADD COLUMN is_email_verified TINYINT(1) DEFAULT 0"
+        ];
+
+        let log = "<h2>✅ DB Schema Update Log</h2><ul>";
+        for (const q of updates) {
+            try {
+                await pool.query(q);
+                log += `<li>Executed: ${q.substring(0, 50)}...</li>`;
+            } catch (err) {
+                if (err.code === 'ER_DUP_FIELDNAME' || err.message.includes('Duplicate column')) {
+                    log += `<li>Skipped (Exists): ${q.substring(0, 50)}...</li>`;
+                } else {
+                    log += `<li style="color:red">Error: ${err.message}</li>`;
+                }
+            }
+        }
+        res.send(log + "</ul><br><a href='/'>Go Home</a>");
+    } catch (err) {
+        res.status(500).send("Fatal Error: " + err.message);
     }
 });
 
