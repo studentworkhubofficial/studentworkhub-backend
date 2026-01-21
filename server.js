@@ -1270,12 +1270,9 @@ app.delete('/api/user/photo/:email', async (req, res, next) => {
 });
 
 // ===================================================
-// ============= FINAL DB FIX ROUTE ==================
+// ============= EMERGENCY TABLE SETUP ===============
 // ===================================================
-// ===================================================
-// ============= MASTER TABLE SETUP ROUTE ============
-// ===================================================
-app.get('/setup-tables', async (req, res) => {
+app.get('/emergency-fix', async (req, res) => {
     try {
         const queries = [
             // 1. Create Jobs Table
@@ -1348,17 +1345,17 @@ app.get('/setup-tables', async (req, res) => {
             )`
         ];
 
-        let log = "<h2>✅ Table Setup Complete</h2><p>Created/Verified tables:</p><ul>";
+        let log = "<h2>✅ EMERGENCY FIX COMPLETE</h2><p>The following tables were checked/created:</p><ul>";
         for (const q of queries) {
              await pool.query(q);
-             // Extract table name for display
              const tableName = q.split('TABLE IF NOT EXISTS ')[1].split(' (')[0];
              log += `<li>${tableName}</li>`;
         }
-        res.send(log + "</ul><br><h3>👉 <a href='/api/admin/data'>Click here to see Admin Data</a></h3>");
+        res.send(log + "</ul><br><h3>👉 <a href='/api/admin/data'>NOW CLICK HERE to check Admin Data</a></h3>");
     } catch (err) {
         res.send("<h1>❌ Setup Failed</h1><p>" + err.message + "</p>");
     }
+});
 });
 
 // ===================================================
