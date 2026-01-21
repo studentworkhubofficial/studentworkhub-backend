@@ -313,13 +313,19 @@ app.get('/api/admin/suspended', async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
+// ==========================================
+// FIXED: Admin Data Route (with better error logs)
+// ==========================================
 app.get('/api/admin/data', async (req, res) => {
     try {
         const [pending] = await pool.query('SELECT * FROM employers WHERE isAddressVerified = 0');
         const [accepted] = await pool.query('SELECT * FROM employers WHERE isAddressVerified = 1');
         const [declined] = await pool.query('SELECT * FROM employers WHERE isAddressVerified = 2');
+        
+        // This is the query that was likely failing because 'users' didn't exist
         const [students] = await pool.query('SELECT * FROM users');
 
+        // Stats queries
         const [s] = await pool.query('SELECT COUNT(*) c FROM users');
         const [v] = await pool.query('SELECT COUNT(*) c FROM employers WHERE isAddressVerified=1');
         const [r] = await pool.query('SELECT COUNT(*) c FROM employers WHERE isAddressVerified=2');
@@ -344,7 +350,11 @@ app.get('/api/admin/data', async (req, res) => {
                 platinum: platinum[0].c
             }
         });
-    } catch (e) { res.status(500).json({ success: false }); }
+    } catch (e) { 
+        console.error("Admin Data Error:", e);
+        // Return the actual error message so you can see it in the browser
+        res.status(500).json({ success: false, message: e.message, code: e.code }); 
+    }
 });
 
 app.delete('/api/admin/delete-user/:type/:id', async (req, res, next) => {
@@ -434,9 +444,11 @@ app.post('/api/register', async (req, res, next) => {
             return res.status(400).json({ success: false, message: 'Invalid phone number format.' });
         }
 
+        // Check suspended
         const [suspended] = await pool.query('SELECT * FROM suspended_users WHERE email = ?', [email]);
         if (suspended.length > 0) return res.status(403).json({ success: false, message: 'This email is permanently suspended.' });
 
+        // Check existing
         const [existing] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
         if (existing.length > 0) {
             if (existing[0].is_email_verified === 1) {
@@ -447,7 +459,6 @@ app.post('/api/register', async (req, res, next) => {
 
         const otp = generateOTP();
 
-        // FIXED: Using single quotes for 'student'
         await pool.query(
             `INSERT INTO users (firstName, lastName, email, phone, dob, city, password, role, otp_code, otp_created_at, is_email_verified) VALUES (?, ?, ?, ?, ?, ?, ?, 'student', ?, NOW(), 0)`,
             [firstName, lastName, email, phone, dob, city, password, otp]
@@ -466,7 +477,7 @@ app.post('/api/register', async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
-// 2. Register Employer (FIXED "employer" QUOTE ISSUE)
+// 2. Register Employer
 app.post('/api/register-employer', upload.single('brFile'), async (req, res, next) => {
     try {
         const { companyName, brNumber, industry, address, city, email, phone, password } = req.body;
@@ -489,7 +500,6 @@ app.post('/api/register-employer', upload.single('brFile'), async (req, res, nex
         let brPath = req.file ? `${getBaseUrl(req)}/uploads/${req.file.filename}` : null;
         const otp = generateOTP();
 
-        // FIXED: Using single quotes for 'employer'
         await pool.query(
             `INSERT INTO employers (companyName, brNumber, industry, address, city, email, phone, password, role, isAddressVerified, brCertificate, otp_code, otp_created_at, is_email_verified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'employer', 0, ?, ?, NOW(), 0)`,
             [companyName, brNumber, industry, address, city, email, phone, password, brPath, otp]
@@ -1272,22 +1282,62 @@ app.delete('/api/user/photo/:email', async (req, res, next) => {
 // ===================================================
 // ============= FORCE DATABASE UPDATE ===============
 // ===================================================
+// UPDATED: Now creates ALL missing tables, including Users
 app.get('/force-update', async (req, res) => {
     try {
         const updates = [
-            // 1. Add missing columns to Employers Table
-            "ALTER TABLE employers ADD COLUMN isAddressVerified TINYINT DEFAULT 0",
-            "ALTER TABLE employers ADD COLUMN currentPlan VARCHAR(50) DEFAULT 'free'",
-            "ALTER TABLE employers ADD COLUMN subscriptionExpiresAt DATETIME",
-            "ALTER TABLE employers ADD COLUMN jobPostsRemaining INT DEFAULT 2",
-            "ALTER TABLE employers ADD COLUMN boostsRemaining INT DEFAULT 0",
-            "ALTER TABLE employers ADD COLUMN verifiedBy VARCHAR(100)",
-            "ALTER TABLE employers ADD COLUMN rejectionReason TEXT",
-            "ALTER TABLE employers ADD COLUMN verificationMethods TEXT",
-            "ALTER TABLE employers ADD COLUMN brCertificate VARCHAR(500)",
+            // 1. Create Users Table (Likely missing!)
+            `CREATE TABLE IF NOT EXISTS users (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                firstName VARCHAR(100),
+                lastName VARCHAR(100),
+                email VARCHAR(255) UNIQUE,
+                phone VARCHAR(20),
+                dob DATE,
+                city VARCHAR(100),
+                password VARCHAR(255),
+                role VARCHAR(20) DEFAULT 'student',
+                otp_code VARCHAR(10),
+                otp_created_at DATETIME,
+                is_email_verified TINYINT DEFAULT 0,
+                profilePic VARCHAR(500),
+                cvFile VARCHAR(500),
+                educationLevel VARCHAR(100),
+                createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+            )`,
             
-            // 2. Create missing tables (if they don't exist)
-             `CREATE TABLE IF NOT EXISTS jobs (
+            // 2. Create Employers Table (If missing)
+            `CREATE TABLE IF NOT EXISTS employers (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                companyName VARCHAR(255),
+                brNumber VARCHAR(100),
+                industry VARCHAR(100),
+                address TEXT,
+                city VARCHAR(100),
+                email VARCHAR(255) UNIQUE,
+                phone VARCHAR(20),
+                password VARCHAR(255),
+                role VARCHAR(20) DEFAULT 'employer',
+                logo VARCHAR(500),
+                is_email_verified TINYINT DEFAULT 0,
+                otp_code VARCHAR(10),
+                otp_created_at DATETIME,
+                createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+            )`,
+
+            // 3. Add columns to Employers (Safe to run again)
+            "ALTER TABLE employers ADD COLUMN IF NOT EXISTS isAddressVerified TINYINT DEFAULT 0",
+            "ALTER TABLE employers ADD COLUMN IF NOT EXISTS currentPlan VARCHAR(50) DEFAULT 'free'",
+            "ALTER TABLE employers ADD COLUMN IF NOT EXISTS subscriptionExpiresAt DATETIME",
+            "ALTER TABLE employers ADD COLUMN IF NOT EXISTS jobPostsRemaining INT DEFAULT 2",
+            "ALTER TABLE employers ADD COLUMN IF NOT EXISTS boostsRemaining INT DEFAULT 0",
+            "ALTER TABLE employers ADD COLUMN IF NOT EXISTS verifiedBy VARCHAR(100)",
+            "ALTER TABLE employers ADD COLUMN IF NOT EXISTS rejectionReason TEXT",
+            "ALTER TABLE employers ADD COLUMN IF NOT EXISTS verificationMethods TEXT",
+            "ALTER TABLE employers ADD COLUMN IF NOT EXISTS brCertificate VARCHAR(500)",
+
+            // 4. Other tables
+            `CREATE TABLE IF NOT EXISTS jobs (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 employerEmail VARCHAR(255),
                 companyName VARCHAR(255),
@@ -1320,22 +1370,45 @@ app.get('/force-update', async (req, res) => {
                 type VARCHAR(50),
                 isRead TINYINT DEFAULT 0,
                 createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+            )`,
+             `CREATE TABLE IF NOT EXISTS subscription_payments (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                employerEmail VARCHAR(255),
+                planType VARCHAR(50),
+                amount DECIMAL(10,2),
+                receiptUrl VARCHAR(500),
+                status VARCHAR(50) DEFAULT 'pending',
+                submittedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+                reviewedBy VARCHAR(100),
+                reviewedAt DATETIME,
+                declineReason TEXT
+            )`,
+            `CREATE TABLE IF NOT EXISTS suspended_users (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                email VARCHAR(255),
+                name VARCHAR(255),
+                reason TEXT,
+                proofFiles TEXT,
+                suspendedAt DATETIME DEFAULT CURRENT_TIMESTAMP
             )`
         ];
 
-        let log = "<h2>✅ Database Forced Update Log</h2><ul>";
+        let log = "<h2>✅ Super Database Update Log</h2><ul>";
         for (const q of updates) {
             try {
                 await pool.query(q);
-                log += `<li>Executed: ${q.substring(0, 50)}...</li>`;
+                log += `<li>Executed: ${q.substring(0, 40)}...</li>`;
             } catch (err) {
-                // Ignore "Duplicate column" errors, that just means it's already fixed
-                log += `<li>Skipped (Already exists): ${err.message}</li>`;
+                if(err.code === 'ER_DUP_FIELDNAME' || err.message.includes('Duplicate column')) {
+                     log += `<li>Skipped (Exists): ${q.substring(0, 40)}...</li>`;
+                } else {
+                     log += `<li style="color:red">Error: ${err.message}</li>`;
+                }
             }
         }
         res.send(log + "</ul><br><h3>👉 <a href='/api/admin/data'>Check Admin Data Now</a></h3>");
     } catch (err) {
-        res.send("<h1>❌ Error</h1><p>" + err.message + "</p>");
+        res.send("<h1>❌ Fatal Error</h1><p>" + err.message + "</p>");
     }
 });
 
