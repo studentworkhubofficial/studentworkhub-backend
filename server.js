@@ -1507,5 +1507,41 @@ app.use((err, req, res, next) => {
     res.status(500).json({ success: false, message: err.message || 'Internal Server Error' });
 });
 
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+
+// ==========================================
+// AUTO-FIX: Ensure Database Schema is Correct on Startup
+// ==========================================
+async function ensureDBSchema() {
+    try {
+        console.log("🛠️ Checking Database Schema...");
+        const updates = [
+            "ALTER TABLE users ADD COLUMN otp_code VARCHAR(10)",
+            "ALTER TABLE users ADD COLUMN otp_created_at DATETIME",
+            "ALTER TABLE users ADD COLUMN is_email_verified TINYINT(1) DEFAULT 0",
+
+            "ALTER TABLE employers ADD COLUMN otp_code VARCHAR(10)",
+            "ALTER TABLE employers ADD COLUMN otp_created_at DATETIME",
+            "ALTER TABLE employers ADD COLUMN is_email_verified TINYINT(1) DEFAULT 0"
+        ];
+
+        for (const q of updates) {
+            try {
+                await pool.query(q);
+                // console.log(`  Executed: ${q}`);
+            } catch (err) {
+                if (err.code !== 'ER_DUP_FIELDNAME' && !err.message.includes('Duplicate column')) {
+                    console.error(`  ❌ Error executing ${q}:`, err.message);
+                }
+            }
+        }
+        console.log("✅ Database Schema Checked/Updated.");
+    } catch (err) {
+        console.error("❌ Fatal Schema Check Error:", err);
+    }
+}
+
+// Start Server with DB Check
+ensureDBSchema().then(() => {
+    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+});
 module.exports = app;
