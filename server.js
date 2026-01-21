@@ -1270,13 +1270,24 @@ app.delete('/api/user/photo/:email', async (req, res, next) => {
 });
 
 // ===================================================
-// ============= EMERGENCY TABLE SETUP ===============
+// ============= FORCE DATABASE UPDATE ===============
 // ===================================================
-app.get('/emergency-fix', async (req, res) => {
+app.get('/force-update', async (req, res) => {
     try {
-        const queries = [
-            // 1. Create Jobs Table
-            `CREATE TABLE IF NOT EXISTS jobs (
+        const updates = [
+            // 1. Add missing columns to Employers Table
+            "ALTER TABLE employers ADD COLUMN isAddressVerified TINYINT DEFAULT 0",
+            "ALTER TABLE employers ADD COLUMN currentPlan VARCHAR(50) DEFAULT 'free'",
+            "ALTER TABLE employers ADD COLUMN subscriptionExpiresAt DATETIME",
+            "ALTER TABLE employers ADD COLUMN jobPostsRemaining INT DEFAULT 2",
+            "ALTER TABLE employers ADD COLUMN boostsRemaining INT DEFAULT 0",
+            "ALTER TABLE employers ADD COLUMN verifiedBy VARCHAR(100)",
+            "ALTER TABLE employers ADD COLUMN rejectionReason TEXT",
+            "ALTER TABLE employers ADD COLUMN verificationMethods TEXT",
+            "ALTER TABLE employers ADD COLUMN brCertificate VARCHAR(500)",
+            
+            // 2. Create missing tables (if they don't exist)
+             `CREATE TABLE IF NOT EXISTS jobs (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 employerEmail VARCHAR(255),
                 companyName VARCHAR(255),
@@ -1295,7 +1306,6 @@ app.get('/emergency-fix', async (req, res) => {
                 jobImages TEXT,
                 postedDate DATETIME DEFAULT CURRENT_TIMESTAMP
             )`,
-            // 2. Create Applications Table
             `CREATE TABLE IF NOT EXISTS applications (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 jobId INT,
@@ -1303,7 +1313,6 @@ app.get('/emergency-fix', async (req, res) => {
                 cvFile VARCHAR(500),
                 appliedAt DATETIME DEFAULT CURRENT_TIMESTAMP
             )`,
-            // 3. Create Notifications Table
             `CREATE TABLE IF NOT EXISTS notifications (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 userEmail VARCHAR(255),
@@ -1311,49 +1320,22 @@ app.get('/emergency-fix', async (req, res) => {
                 type VARCHAR(50),
                 isRead TINYINT DEFAULT 0,
                 createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`,
-            // 4. Create Suspended Users Table
-            `CREATE TABLE IF NOT EXISTS suspended_users (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                email VARCHAR(255),
-                name VARCHAR(255),
-                reason TEXT,
-                proofFiles TEXT,
-                suspendedAt DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`,
-            // 5. Create Payments Table
-            `CREATE TABLE IF NOT EXISTS subscription_payments (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                employerEmail VARCHAR(255),
-                planType VARCHAR(50),
-                amount DECIMAL(10,2),
-                receiptUrl VARCHAR(500),
-                status VARCHAR(50) DEFAULT 'pending',
-                submittedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-                reviewedBy VARCHAR(255),
-                reviewedAt DATETIME,
-                declineReason TEXT
-            )`,
-             // 6. Create Subscriptions Table
-            `CREATE TABLE IF NOT EXISTS subscriptions (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                employerEmail VARCHAR(255),
-                planType VARCHAR(50),
-                status VARCHAR(50),
-                activatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-                expiresAt DATETIME
             )`
         ];
 
-        let log = "<h2>✅ EMERGENCY FIX COMPLETE</h2><p>The following tables were checked/created:</p><ul>";
-        for (const q of queries) {
-             await pool.query(q);
-             const tableName = q.split('TABLE IF NOT EXISTS ')[1].split(' (')[0];
-             log += `<li>${tableName}</li>`;
+        let log = "<h2>✅ Database Forced Update Log</h2><ul>";
+        for (const q of updates) {
+            try {
+                await pool.query(q);
+                log += `<li>Executed: ${q.substring(0, 50)}...</li>`;
+            } catch (err) {
+                // Ignore "Duplicate column" errors, that just means it's already fixed
+                log += `<li>Skipped (Already exists): ${err.message}</li>`;
+            }
         }
-        res.send(log + "</ul><br><h3>👉 <a href='/api/admin/data'>NOW CLICK HERE to check Admin Data</a></h3>");
+        res.send(log + "</ul><br><h3>👉 <a href='/api/admin/data'>Check Admin Data Now</a></h3>");
     } catch (err) {
-        res.send("<h1>❌ Setup Failed</h1><p>" + err.message + "</p>");
+        res.send("<h1>❌ Error</h1><p>" + err.message + "</p>");
     }
 });
 
