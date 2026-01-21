@@ -933,14 +933,14 @@
                         </div>
                         <div class="input-group">
                             <label>Hours / Day (Max 6)</label>
-                            <input type="number" id="jHours" max="6" placeholder="4" required>
+                            <input type="number" id="jHours" min="1" max="6" placeholder="4" required>
                         </div>
                     </div>
 
                     <div class="row-2">
                         <div class="input-group">
                             <label>Pay Amount (LKR)</label>
-                            <input type="number" id="jAmount" placeholder="1500" required>
+                            <input type="number" id="jAmount" min="1" placeholder="1500" required>
                         </div>
                         <div class="input-group">
                             <label>Frequency</label>
@@ -1920,6 +1920,23 @@
                 showCustomModal({ type: 'error', title: 'Validation', message: "Please set an application deadline." });
                 return;
             }
+
+            // --- NEW VALIDATION: Hours and Pay ---
+            const hoursInput = document.getElementById('jHours');
+            const amountInput = document.getElementById('jAmount');
+            const hoursVal = parseInt(hoursInput.value);
+            const amountVal = parseFloat(amountInput.value);
+
+            if (isNaN(hoursVal) || hoursVal < 1 || hoursVal > 6) {
+                showCustomModal({ type: 'error', title: 'Invalid Hours', message: "Hours per day must be between 1 and 6." });
+                return;
+            }
+
+            if (isNaN(amountVal) || amountVal <= 0) {
+                showCustomModal({ type: 'error', title: 'Invalid Pay', message: "Pay amount must be greater than 0." });
+                return;
+            }
+            // -------------------------------------
 
             const isPremium = document.getElementById('jPremium').checked;
             const submitBtn = document.getElementById('submitBtn');

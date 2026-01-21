@@ -937,6 +937,15 @@ app.post('/api/post-job', upload.array('posters', 5), async (req, res, next) => 
     try {
         const { employerEmail, companyName, jobTitle, location, schedule, hoursPerDay, payAmount, payFrequency, description, category, isPremium, deadline } = req.body;
 
+        // --- VALIDATION ---
+        if (hoursPerDay < 1 || hoursPerDay > 6) {
+            return res.status(400).json({ success: false, message: 'Hours per day must be between 1 and 6.' });
+        }
+        if (payAmount <= 0) {
+            return res.status(400).json({ success: false, message: 'Pay amount must be greater than 0.' });
+        }
+        // ------------------
+
         const [employer] = await pool.query(
             'SELECT currentPlan, boostsRemaining FROM employers WHERE email = ?',
             [employerEmail]
@@ -1084,6 +1093,15 @@ app.get('/api/my-jobs/:email', async (req, res, next) => {
 app.put('/api/jobs/:id', upload.array('posters', 5), async (req, res, next) => {
     try {
         const { jobTitle, location, schedule, hoursPerDay, payAmount, payFrequency, description, category, isPremium, status, deadline, keepExisting, existingImages, replaceImages } = req.body;
+
+        // --- VALIDATION ---
+        if (hoursPerDay < 1 || hoursPerDay > 6) {
+            return res.status(400).json({ success: false, message: 'Hours per day must be between 1 and 6.' });
+        }
+        if (payAmount <= 0) {
+            return res.status(400).json({ success: false, message: 'Pay amount must be greater than 0.' });
+        }
+        // ------------------
 
         let updateQuery = 'UPDATE jobs SET jobTitle=?, location=?, schedule=?, hoursPerDay=?, payAmount=?, payFrequency=?, description=?, category=?, isPremium=?, status=?, deadline=?';
         let params = [jobTitle, location, schedule, hoursPerDay, payAmount, payFrequency, description, category, isPremium, status, deadline];
