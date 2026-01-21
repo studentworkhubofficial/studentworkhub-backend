@@ -1356,7 +1356,6 @@ app.get('/emergency-fix', async (req, res) => {
         res.send("<h1>❌ Setup Failed</h1><p>" + err.message + "</p>");
     }
 });
-});
 
 // ===================================================
 // ================ GLOBAL ERROR HANDLER =============
