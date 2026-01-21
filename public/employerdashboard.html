@@ -1902,9 +1902,12 @@
 
         document.getElementById('jobForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            console.log("Submit button clicked");
 
             // Validation
             const deadlineInput = document.getElementById('jDeadline').value;
+            console.log("Deadline:", deadlineInput);
+
             if (deadlineInput) {
                 const selectedDate = new Date(deadlineInput);
                 const today = new Date();
@@ -1919,9 +1922,14 @@
             }
 
             const isPremium = document.getElementById('jPremium').checked;
+            const submitBtn = document.getElementById('submitBtn');
 
             // Function to handle actual submission
             const submitPayload = async () => {
+                console.log("Starting payload submission...");
+                submitBtn.innerText = "Publishing...";
+                submitBtn.disabled = true;
+
                 const formData = new FormData();
                 formData.append('employerEmail', user.email);
                 formData.append('companyName', user.name);
@@ -1959,9 +1967,13 @@
                 let method = 'POST';
                 if (isEditing) { url = `/api/jobs/${editingId}`; method = 'PUT'; }
 
+                console.log("Sending request to:", url);
+
                 try {
                     const res = await fetch(url, { method: method, body: formData });
                     const data = await res.json();
+                    console.log("Response:", data);
+
                     if (data.success) {
                         showCustomModal({
                             type: 'success',
@@ -1975,7 +1987,11 @@
                         showCustomModal({ type: 'error', title: 'Error', message: data.message });
                     }
                 } catch (e) {
-                    showCustomModal({ type: 'error', title: 'Network Error', message: 'Error connecting to server' });
+                    console.error("Submission Error:", e);
+                    showCustomModal({ type: 'error', title: 'Network Error', message: 'Error connecting to server: ' + e.message });
+                } finally {
+                    submitBtn.innerText = isEditing ? "Save Changes" : "Publish Job";
+                    submitBtn.disabled = false;
                 }
             };
 
