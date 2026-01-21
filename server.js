@@ -1272,32 +1272,92 @@ app.delete('/api/user/photo/:email', async (req, res, next) => {
 // ===================================================
 // ============= FINAL DB FIX ROUTE ==================
 // ===================================================
-app.get('/fix-admin-db', async (req, res) => {
+// ===================================================
+// ============= MASTER TABLE SETUP ROUTE ============
+// ===================================================
+app.get('/setup-tables', async (req, res) => {
     try {
         const queries = [
-            "ALTER TABLE employers ADD COLUMN isAddressVerified TINYINT DEFAULT 0",
-            "ALTER TABLE employers ADD COLUMN currentPlan VARCHAR(50) DEFAULT 'free'",
-            "ALTER TABLE employers ADD COLUMN subscriptionExpiresAt DATETIME",
-            "ALTER TABLE employers ADD COLUMN jobPostsRemaining INT DEFAULT 2",
-            "ALTER TABLE employers ADD COLUMN boostsRemaining INT DEFAULT 0",
-            "ALTER TABLE employers ADD COLUMN verifiedBy VARCHAR(100)",
-            "ALTER TABLE employers ADD COLUMN rejectionReason TEXT",
-            "ALTER TABLE employers ADD COLUMN verificationMethods TEXT"
+            // 1. Create Jobs Table
+            `CREATE TABLE IF NOT EXISTS jobs (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                employerEmail VARCHAR(255),
+                companyName VARCHAR(255),
+                jobTitle VARCHAR(255),
+                location VARCHAR(255),
+                schedule VARCHAR(100),
+                hoursPerDay INT,
+                payAmount DECIMAL(10,2),
+                payFrequency VARCHAR(50),
+                description TEXT,
+                category VARCHAR(100),
+                isPremium TINYINT DEFAULT 0,
+                promotedAt DATETIME,
+                status VARCHAR(50) DEFAULT 'Active',
+                deadline DATE,
+                jobImages TEXT,
+                postedDate DATETIME DEFAULT CURRENT_TIMESTAMP
+            )`,
+            // 2. Create Applications Table
+            `CREATE TABLE IF NOT EXISTS applications (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                jobId INT,
+                studentEmail VARCHAR(255),
+                cvFile VARCHAR(500),
+                appliedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+            )`,
+            // 3. Create Notifications Table
+            `CREATE TABLE IF NOT EXISTS notifications (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                userEmail VARCHAR(255),
+                message TEXT,
+                type VARCHAR(50),
+                isRead TINYINT DEFAULT 0,
+                createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+            )`,
+            // 4. Create Suspended Users Table
+            `CREATE TABLE IF NOT EXISTS suspended_users (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                email VARCHAR(255),
+                name VARCHAR(255),
+                reason TEXT,
+                proofFiles TEXT,
+                suspendedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+            )`,
+            // 5. Create Payments Table
+            `CREATE TABLE IF NOT EXISTS subscription_payments (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                employerEmail VARCHAR(255),
+                planType VARCHAR(50),
+                amount DECIMAL(10,2),
+                receiptUrl VARCHAR(500),
+                status VARCHAR(50) DEFAULT 'pending',
+                submittedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+                reviewedBy VARCHAR(255),
+                reviewedAt DATETIME,
+                declineReason TEXT
+            )`,
+             // 6. Create Subscriptions Table
+            `CREATE TABLE IF NOT EXISTS subscriptions (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                employerEmail VARCHAR(255),
+                planType VARCHAR(50),
+                status VARCHAR(50),
+                activatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+                expiresAt DATETIME
+            )`
         ];
 
-        let results = [];
+        let log = "<h2>✅ Table Setup Complete</h2><p>Created/Verified tables:</p><ul>";
         for (const q of queries) {
-            try {
-                await pool.query(q);
-                results.push(`✅ Executed: ${q}`);
-            } catch (err) {
-                results.push(`⚠️ Skipped (Duplicate?): ${err.message}`);
-            }
+             await pool.query(q);
+             // Extract table name for display
+             const tableName = q.split('TABLE IF NOT EXISTS ')[1].split(' (')[0];
+             log += `<li>${tableName}</li>`;
         }
-        
-        res.send(`<h1>Database Update Log</h1><pre>${results.join('\n')}</pre><br><a href='/api/admin/data'>Try Admin Data Link Now</a>`);
+        res.send(log + "</ul><br><h3>👉 <a href='/api/admin/data'>Click here to see Admin Data</a></h3>");
     } catch (err) {
-        res.send(`<h1>Critical Error</h1><p>${err.message}</p>`);
+        res.send("<h1>❌ Setup Failed</h1><p>" + err.message + "</p>");
     }
 });
 
