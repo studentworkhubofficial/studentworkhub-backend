@@ -439,7 +439,7 @@
             <div class="menu-item" onclick="switchTab('students')">🎓 Manage Students</div>
             <div class="menu-item" onclick="switchTab('payments')">💰 Subscription Payments</div>
             <div class="menu-item" onclick="switchTab('suspended')">🚫 Suspended Accounts</div>
-            <div class="menu-item logout" onclick="location.reload()">Log Out</div>
+            <div class="menu-item logout" onclick="logout()">Log Out</div>
         </div>
 
         <div class="content">
@@ -759,14 +759,42 @@
             });
             const data = await res.json();
             if (data.success) {
-                adminUser = data.username;
+                adminUser = u; // Use input username if returned data doesn't have it, though server returns success:true
                 localStorage.setItem('adminUser', adminUser);
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('dashboard').style.display = 'flex';
                 loadData();
                 loadPayments();
+                startLiveUpdates();
             } else document.getElementById('errMsg').style.display = 'block';
         });
+
+        // Persistence & Live Updates
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedUser = localStorage.getItem('adminUser');
+            if (savedUser) {
+                adminUser = savedUser;
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'flex';
+                loadData();
+                loadPayments();
+                startLiveUpdates();
+            }
+        });
+
+        function logout() {
+            localStorage.removeItem('adminUser');
+            location.reload();
+        }
+
+        let liveUpdateInterval;
+        function startLiveUpdates() {
+            if (liveUpdateInterval) clearInterval(liveUpdateInterval);
+            liveUpdateInterval = setInterval(() => {
+                loadData();
+                loadPayments();
+            }, 5000);
+        }
 
         async function loadData() {
             const res = await fetch('/api/admin/data');
