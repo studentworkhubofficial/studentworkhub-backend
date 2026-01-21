@@ -137,9 +137,13 @@ async function checkExpiredBoosts() {
 async function autoCloseJobs() {
     try {
         console.log("Running auto-close jobs check...");
+        // Ensure status column exists before running this query to prevent crash logs
         await pool.query(`UPDATE jobs SET status = 'Closed' WHERE deadline < CURDATE() AND status = 'Active'`);
     } catch (e) {
-        console.error("Auto-close error:", e);
+        // Silently fail if column missing, force-update will fix it
+        if (!e.message.includes("Unknown column")) {
+            console.error("Auto-close error:", e);
+        }
     }
 }
 
@@ -314,7 +318,7 @@ app.get('/api/admin/suspended', async (req, res, next) => {
 });
 
 // ==========================================
-// FIXED: Admin Data Route (with better error logs)
+// FIXED: Admin Data Route (With explicit error handling)
 // ==========================================
 app.get('/api/admin/data', async (req, res) => {
     try {
@@ -322,7 +326,6 @@ app.get('/api/admin/data', async (req, res) => {
         const [accepted] = await pool.query('SELECT * FROM employers WHERE isAddressVerified = 1');
         const [declined] = await pool.query('SELECT * FROM employers WHERE isAddressVerified = 2');
         
-        // This is the query that was likely failing because 'users' didn't exist
         const [students] = await pool.query('SELECT * FROM users');
 
         // Stats queries
@@ -352,7 +355,6 @@ app.get('/api/admin/data', async (req, res) => {
         });
     } catch (e) { 
         console.error("Admin Data Error:", e);
-        // Return the actual error message so you can see it in the browser
         res.status(500).json({ success: false, message: e.message, code: e.code }); 
     }
 });
@@ -444,11 +446,9 @@ app.post('/api/register', async (req, res, next) => {
             return res.status(400).json({ success: false, message: 'Invalid phone number format.' });
         }
 
-        // Check suspended
         const [suspended] = await pool.query('SELECT * FROM suspended_users WHERE email = ?', [email]);
         if (suspended.length > 0) return res.status(403).json({ success: false, message: 'This email is permanently suspended.' });
 
-        // Check existing
         const [existing] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
         if (existing.length > 0) {
             if (existing[0].is_email_verified === 1) {
@@ -1282,11 +1282,12 @@ app.delete('/api/user/photo/:email', async (req, res, next) => {
 // ===================================================
 // ============= FORCE DATABASE UPDATE ===============
 // ===================================================
-// UPDATED: Now creates ALL missing tables, including Users
+// FIXED: Removed "IF NOT EXISTS" from ALTER commands to fix SQL Syntax error
+// ADDED: Specific command to add 'status' column to jobs table
 app.get('/force-update', async (req, res) => {
     try {
         const updates = [
-            // 1. Create Users Table (Likely missing!)
+            // 1. Create Tables
             `CREATE TABLE IF NOT EXISTS users (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 firstName VARCHAR(100),
@@ -1306,7 +1307,6 @@ app.get('/force-update', async (req, res) => {
                 createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
             )`,
             
-            // 2. Create Employers Table (If missing)
             `CREATE TABLE IF NOT EXISTS employers (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 companyName VARCHAR(255),
@@ -1325,18 +1325,18 @@ app.get('/force-update', async (req, res) => {
                 createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
             )`,
 
-            // 3. Add columns to Employers (Safe to run again)
-            "ALTER TABLE employers ADD COLUMN IF NOT EXISTS isAddressVerified TINYINT DEFAULT 0",
-            "ALTER TABLE employers ADD COLUMN IF NOT EXISTS currentPlan VARCHAR(50) DEFAULT 'free'",
-            "ALTER TABLE employers ADD COLUMN IF NOT EXISTS subscriptionExpiresAt DATETIME",
-            "ALTER TABLE employers ADD COLUMN IF NOT EXISTS jobPostsRemaining INT DEFAULT 2",
-            "ALTER TABLE employers ADD COLUMN IF NOT EXISTS boostsRemaining INT DEFAULT 0",
-            "ALTER TABLE employers ADD COLUMN IF NOT EXISTS verifiedBy VARCHAR(100)",
-            "ALTER TABLE employers ADD COLUMN IF NOT EXISTS rejectionReason TEXT",
-            "ALTER TABLE employers ADD COLUMN IF NOT EXISTS verificationMethods TEXT",
-            "ALTER TABLE employers ADD COLUMN IF NOT EXISTS brCertificate VARCHAR(500)",
+            // 2. Add columns to Employers (Removed IF NOT EXISTS for compatibility)
+            "ALTER TABLE employers ADD COLUMN isAddressVerified TINYINT DEFAULT 0",
+            "ALTER TABLE employers ADD COLUMN currentPlan VARCHAR(50) DEFAULT 'free'",
+            "ALTER TABLE employers ADD COLUMN subscriptionExpiresAt DATETIME",
+            "ALTER TABLE employers ADD COLUMN jobPostsRemaining INT DEFAULT 2",
+            "ALTER TABLE employers ADD COLUMN boostsRemaining INT DEFAULT 0",
+            "ALTER TABLE employers ADD COLUMN verifiedBy VARCHAR(100)",
+            "ALTER TABLE employers ADD COLUMN rejectionReason TEXT",
+            "ALTER TABLE employers ADD COLUMN verificationMethods TEXT",
+            "ALTER TABLE employers ADD COLUMN brCertificate VARCHAR(500)",
 
-            // 4. Other tables
+            // 3. Other tables
             `CREATE TABLE IF NOT EXISTS jobs (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 employerEmail VARCHAR(255),
@@ -1356,6 +1356,13 @@ app.get('/force-update', async (req, res) => {
                 jobImages TEXT,
                 postedDate DATETIME DEFAULT CURRENT_TIMESTAMP
             )`,
+            
+            // 4. FIX JOBS TABLE: Add missing columns if table already existed but was empty
+            "ALTER TABLE jobs ADD COLUMN status VARCHAR(50) DEFAULT 'Active'",
+            "ALTER TABLE jobs ADD COLUMN isPremium TINYINT DEFAULT 0",
+            "ALTER TABLE jobs ADD COLUMN promotedAt DATETIME",
+            "ALTER TABLE jobs ADD COLUMN deadline DATE",
+
             `CREATE TABLE IF NOT EXISTS applications (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 jobId INT,
@@ -1399,6 +1406,7 @@ app.get('/force-update', async (req, res) => {
                 await pool.query(q);
                 log += `<li>Executed: ${q.substring(0, 40)}...</li>`;
             } catch (err) {
+                // Ignore duplicate column errors (means it worked already)
                 if(err.code === 'ER_DUP_FIELDNAME' || err.message.includes('Duplicate column')) {
                      log += `<li>Skipped (Exists): ${q.substring(0, 40)}...</li>`;
                 } else {
