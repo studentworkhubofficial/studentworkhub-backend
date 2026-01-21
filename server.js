@@ -325,7 +325,7 @@ app.get('/api/admin/data', async (req, res) => {
         const [pending] = await pool.query('SELECT * FROM employers WHERE isAddressVerified = 0');
         const [accepted] = await pool.query('SELECT * FROM employers WHERE isAddressVerified = 1');
         const [declined] = await pool.query('SELECT * FROM employers WHERE isAddressVerified = 2');
-        
+
         const [students] = await pool.query('SELECT * FROM users');
 
         // Stats queries
@@ -353,9 +353,9 @@ app.get('/api/admin/data', async (req, res) => {
                 platinum: platinum[0].c
             }
         });
-    } catch (e) { 
+    } catch (e) {
         console.error("Admin Data Error:", e);
-        res.status(500).json({ success: false, message: e.message, code: e.code }); 
+        res.status(500).json({ success: false, message: e.message, code: e.code });
     }
 });
 
@@ -1306,7 +1306,7 @@ app.get('/force-update', async (req, res) => {
                 educationLevel VARCHAR(100),
                 createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
             )`,
-            
+
             `CREATE TABLE IF NOT EXISTS employers (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 companyName VARCHAR(255),
@@ -1356,12 +1356,13 @@ app.get('/force-update', async (req, res) => {
                 jobImages TEXT,
                 postedDate DATETIME DEFAULT CURRENT_TIMESTAMP
             )`,
-            
+
             // 4. FIX JOBS TABLE: Add missing columns if table already existed but was empty
             "ALTER TABLE jobs ADD COLUMN status VARCHAR(50) DEFAULT 'Active'",
             "ALTER TABLE jobs ADD COLUMN isPremium TINYINT DEFAULT 0",
             "ALTER TABLE jobs ADD COLUMN promotedAt DATETIME",
             "ALTER TABLE jobs ADD COLUMN deadline DATE",
+            "ALTER TABLE jobs ADD COLUMN jobImages TEXT",
 
             `CREATE TABLE IF NOT EXISTS applications (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -1378,7 +1379,7 @@ app.get('/force-update', async (req, res) => {
                 isRead TINYINT DEFAULT 0,
                 createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
             )`,
-             `CREATE TABLE IF NOT EXISTS subscription_payments (
+            `CREATE TABLE IF NOT EXISTS subscription_payments (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 employerEmail VARCHAR(255),
                 planType VARCHAR(50),
@@ -1407,10 +1408,10 @@ app.get('/force-update', async (req, res) => {
                 log += `<li>Executed: ${q.substring(0, 40)}...</li>`;
             } catch (err) {
                 // Ignore duplicate column errors (means it worked already)
-                if(err.code === 'ER_DUP_FIELDNAME' || err.message.includes('Duplicate column')) {
-                     log += `<li>Skipped (Exists): ${q.substring(0, 40)}...</li>`;
+                if (err.code === 'ER_DUP_FIELDNAME' || err.message.includes('Duplicate column')) {
+                    log += `<li>Skipped (Exists): ${q.substring(0, 40)}...</li>`;
                 } else {
-                     log += `<li style="color:red">Error: ${err.message}</li>`;
+                    log += `<li style="color:red">Error: ${err.message}</li>`;
                 }
             }
         }
