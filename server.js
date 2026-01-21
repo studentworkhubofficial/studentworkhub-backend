@@ -6,6 +6,7 @@ const fs = require('fs');
 const mysql = require('mysql2/promise');
 const path = require('path');
 const nodemailer = require('nodemailer');
+const archiver = require('archiver');
 require('dotenv').config();
 
 const app = express();
@@ -409,8 +410,14 @@ app.post('/api/apply-job', upload.single('newCv'), async (req, res, next) => {
             const [u] = await pool.query('SELECT cvFile FROM users WHERE email=?', [studentEmail]);
             if (!u.length || !u[0].cvFile) return res.status(400).json({ success: false, message: 'No CV found' });
             cvPath = u[0].cvFile;
+            if (cvPath && !cvPath.toLowerCase().endsWith('.pdf')) {
+                // If using existing, we assume it was validated on upload, but good to check extension just in case
+                // However, user might have uploaded before validation rule.
+                // For new uploads:
+            }
         } else {
             if (!req.file) return res.status(400).json({ success: false, message: "No PDF uploaded" });
+            if (req.file.mimetype !== 'application/pdf') return res.status(400).json({ success: false, message: "Only PDF files allowed" });
             cvPath = `${getBaseUrl(req)}/uploads/${req.file.filename}`;
         }
 
@@ -430,6 +437,39 @@ app.get('/api/employer/applications/:email', async (req, res, next) => {
     try {
         const [apps] = await pool.query(`SELECT a.*, u.firstName, u.lastName, u.phone, u.email as studentEmail, j.jobTitle FROM applications a JOIN jobs j ON a.jobId = j.id JOIN users u ON a.studentEmail = u.email WHERE j.employerEmail = ?`, [req.params.email]);
         res.json({ success: true, applications: apps });
+    } catch (e) { next(e); }
+});
+
+app.get('/api/employer/download-cvs/:email', async (req, res, next) => {
+    try {
+        const { email } = req.params;
+        const [apps] = await pool.query(
+            `SELECT a.cvFile, u.firstName, u.lastName 
+             FROM applications a 
+             JOIN jobs j ON a.jobId = j.id 
+             JOIN users u ON a.studentEmail = u.email 
+             WHERE j.employerEmail = ?`,
+            [email]
+        );
+
+        if (!apps.length) return res.status(404).send('No CVs found');
+
+        const archive = archiver('zip', { zlib: { level: 9 } });
+        res.attachment('All_CVs.zip');
+        archive.pipe(res);
+
+        for (const app of apps) {
+            if (!app.cvFile) continue;
+            // Extract filename from URL
+            const fileName = app.cvFile.split('/').pop();
+            const filePath = path.join(__dirname, 'uploads', fileName);
+
+            if (fs.existsSync(filePath)) {
+                archive.file(filePath, { name: `CV_${app.firstName}_${app.lastName}_${fileName}` });
+            }
+        }
+
+        archive.finalize();
     } catch (e) { next(e); }
 });
 
@@ -530,7 +570,10 @@ app.post('/api/update-profile', upload.fields([{ name: 'profilePic' }, { name: '
         let p = [firstName, lastName, phone, dob, city, educationLevel];
 
         if (req.files['profilePic']) { q += `, profilePic=?`; p.push(`${getBaseUrl(req)}/uploads/${req.files['profilePic'][0].filename}`); }
-        if (req.files['cvFile']) { q += `, cvFile=?`; p.push(`${getBaseUrl(req)}/uploads/${req.files['cvFile'][0].filename}`); }
+        if (req.files['cvFile']) {
+            if (req.files['cvFile'][0].mimetype !== 'application/pdf') return res.status(400).json({ success: false, message: "Only PDF files allowed for CV" });
+            q += `, cvFile=?`; p.push(`${getBaseUrl(req)}/uploads/${req.files['cvFile'][0].filename}`);
+        }
 
         await pool.query(q + ' WHERE email=?', [...p, email]);
         res.json({ success: true });

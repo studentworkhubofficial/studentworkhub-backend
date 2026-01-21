@@ -1346,18 +1346,9 @@
             showCustomModal({
                 type: 'confirm',
                 title: 'Download All CVs',
-                message: `Download ${myApplications.length} CVs? Ensure pop-ups are allowed within your browser settings.`,
+                message: `Download ${myApplications.length} CVs as a ZIP file?`,
                 onConfirm: () => {
-                    myApplications.forEach((app, index) => {
-                        setTimeout(() => {
-                            const link = document.createElement('a');
-                            link.href = app.cvFile;
-                            link.download = `CV_${app.firstName}_${app.lastName}.pdf`;
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
-                        }, index * 500);
-                    });
+                    window.location.href = `/api/employer/download-cvs/${user.email}`;
                 }
             });
         }
