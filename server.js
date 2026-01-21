@@ -576,7 +576,10 @@ app.post('/api/update-profile', upload.fields([{ name: 'profilePic' }, { name: '
         }
 
         await pool.query(q + ' WHERE email=?', [...p, email]);
-        res.json({ success: true });
+
+        // Fetch updated user to return to frontend
+        const [updatedUser] = await pool.query('SELECT * FROM users WHERE email=?', [email]);
+        res.json({ success: true, user: updatedUser[0] });
     } catch (e) { next(e); }
 });
 // (Similar cleanups for update-employer and delete photo/cv routes omitted for brevity but assumed included in full rewrite)
