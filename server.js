@@ -984,10 +984,25 @@ app.post('/api/post-job', upload.array('posters', 5), async (req, res, next) => 
 
         const promotedAt = premiumStatus ? new Date() : null;
 
-        await pool.query(
-            `INSERT INTO jobs (employerEmail, companyName, jobTitle, location, schedule, hoursPerDay, payAmount, payFrequency, description, category, isPremium, promotedAt, status, deadline, jobImages, postedDate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Active', ?, ?, NOW())`,
-            [employerEmail, companyName, jobTitle, location, schedule, hoursPerDay, payAmount, payFrequency, description, category, premiumStatus, promotedAt, validDeadline, imgs]
-        );
+        try {
+            await pool.query(
+                `INSERT INTO jobs (employerEmail, companyName, jobTitle, location, schedule, hoursPerDay, payAmount, payFrequency, description, category, isPremium, promotedAt, status, deadline, jobImages, postedDate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Active', ?, ?, NOW())`,
+                [employerEmail, companyName, jobTitle, location, schedule, hoursPerDay, payAmount, payFrequency, description, category, premiumStatus, promotedAt, validDeadline, imgs]
+            );
+        } catch (insertErr) {
+            // Self-healing: If jobImages column is missing, add it and retry
+            if (insertErr.code === 'ER_BAD_FIELD_ERROR' && insertErr.message.includes('jobImages')) {
+                console.log("⚠️ Missing jobImages column detected. Attempting to fix...");
+                await pool.query("ALTER TABLE jobs ADD COLUMN jobImages TEXT");
+                // Retry Insert
+                await pool.query(
+                    `INSERT INTO jobs (employerEmail, companyName, jobTitle, location, schedule, hoursPerDay, payAmount, payFrequency, description, category, isPremium, promotedAt, status, deadline, jobImages, postedDate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Active', ?, ?, NOW())`,
+                    [employerEmail, companyName, jobTitle, location, schedule, hoursPerDay, payAmount, payFrequency, description, category, premiumStatus, promotedAt, validDeadline, imgs]
+                );
+            } else {
+                throw insertErr;
+            }
+        }
 
         if (premiumStatus) {
             await pool.query('UPDATE employers SET boostsRemaining = boostsRemaining - 1 WHERE email = ?', [employerEmail]);
@@ -1087,7 +1102,19 @@ app.put('/api/jobs/:id', upload.array('posters', 5), async (req, res, next) => {
         updateQuery += ' WHERE id=?';
         params.push(req.params.id);
 
-        await pool.query(updateQuery, params);
+        try {
+            await pool.query(updateQuery, params);
+        } catch (updateErr) {
+            // Self-healing: If jobImages column is missing, add it and retry
+            if (updateErr.code === 'ER_BAD_FIELD_ERROR' && updateErr.message.includes('jobImages')) {
+                console.log("⚠️ Missing jobImages column detected in UPDATE. Attempting to fix...");
+                await pool.query("ALTER TABLE jobs ADD COLUMN jobImages TEXT");
+                // Retry Update
+                await pool.query(updateQuery, params);
+            } else {
+                throw updateErr; // Re-throw if it's not the specific error
+            }
+        }
         res.json({ success: true });
     } catch (err) { next(err); }
 });
